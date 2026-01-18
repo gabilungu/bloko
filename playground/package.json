@@ -5,12 +5,13 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "bloko": "node ../bloko/dist/cli/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bloko": "file:../bloko"
+    "bloko": "^0.0.39"
   }
 }

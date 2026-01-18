@@ -72,4 +72,4 @@ export type { DB, DBConfig } from './db.js';
 export type { Crud } from './crud/index.js';
 export type { Api, NodesApi, NodeWithContents, ContentItem, TreeNode, FindByPathResult } from './api/index.js';
 export type { CollectionsApi, CollectionWithNavigation, NavNode } from './api/index.js';
-export type { S3Config, ImageService, VariantConfig, UploadResult } from './s3/index.js';
+export type { S3Config, ImageService, VariantOptions, UploadResult } from './s3/index.js';

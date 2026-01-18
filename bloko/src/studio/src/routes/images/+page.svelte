@@ -2,15 +2,11 @@
 	import { page } from '$app/stores';
 	import { goto, invalidate } from '$app/navigation';
 	import { notifications } from '$lib/ui/Notification/Notification.svelte';
-	import Tabs from '$lib/ui/Tabs/index.js';
 
 	let { data } = $props();
 
 	let uploading = $state(false);
 	let selectedId = $derived($page.params.sid || null);
-
-	// Tab management
-	let activeTab = $state('images');
 
 	function selectImage(id) {
 		// If clicking the same image, deselect it
@@ -67,91 +63,45 @@
 		<h1>Images</h1>
 	</div>
 
-	<Tabs {activeTab}>
-		<Tabs.Tab id="images" label="Images" />
-		<Tabs.Tab id="presets" label="Presets" />
+	<div class="content">
+		<div class="uploadSection">
+			<label for="fileInput" class="uploadButton" class:uploading>
+				{uploading ? 'Uploading...' : 'Upload Image'}
+			</label>
+			<input
+				id="fileInput"
+				type="file"
+				accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+				onchange={handleFileUpload}
+				disabled={uploading}
+				style="display: none;"
+			/>
+		</div>
 
-		<Tabs.List />
-
-		<Tabs.Content tabId="images">
-			<div class="tabContent">
-				<div class="uploadSection">
-					<label for="fileInput" class="uploadButton" class:uploading>
-						{uploading ? 'Uploading...' : 'Upload Image'}
-					</label>
-					<input
-						id="fileInput"
-						type="file"
-						accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-						onchange={handleFileUpload}
-						disabled={uploading}
-						style="display: none;"
-					/>
-				</div>
-
-				{#if data.images.length === 0}
-					<div class="emptyState">
-						<p>No images uploaded yet.</p>
-						<p class="hint">Click "Upload Image" to add your first image.</p>
-					</div>
-				{:else}
-					<div class="thumbnailGrid">
-						{#each data.images as image}
-							{@const thumbnailUrl = getImageThumbnail(image)}
-							<button
-								class="thumbnail"
-								class:selected={selectedId === image.id}
-								onclick={() => selectImage(image.id)}
-							>
-								{#if thumbnailUrl}
-									<img src={thumbnailUrl} alt={image.file_name} />
-								{:else}
-									<div class="noPreview">No preview</div>
-								{/if}
-							</button>
-						{/each}
-					</div>
-				{/if}
+		{#if data.images.length === 0}
+			<div class="emptyState">
+				<p>No images uploaded yet.</p>
+				<p class="hint">Click "Upload Image" to add your first image.</p>
 			</div>
-		</Tabs.Content>
-
-		<Tabs.Content tabId="presets">
-			<div class="tabContent">
-				<div class="presetsHeader">
-					<h2>Image Presets</h2>
-					<p class="description">Configure image processing presets for automatic variant generation</p>
-				</div>
-
-				<div class="presetsList">
-					<table>
-						<thead>
-							<tr>
-								<th>Preset ID</th>
-								<th>Max Dimension</th>
-								<th>Quality</th>
-								<th>Convert Format</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each data.presets as preset}
-								<tr>
-									<td>
-										<strong>{preset.id}</strong>
-										{#if preset.id === 'original'}
-											<span class="badge">Original</span>
-										{/if}
-									</td>
-									<td>{preset.max_dimension ?? 'N/A'}</td>
-									<td>{preset.quality}%</td>
-									<td>{preset.convert_format ?? 'Keep original'}</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
+		{:else}
+			<div class="thumbnailGrid">
+				{#each data.images as image}
+					{@const thumbnailUrl = getImageThumbnail(image)}
+					<button
+						class="thumbnail"
+						class:selected={selectedId === image.id}
+						onclick={() => selectImage(image.id)}
+					>
+						{#if thumbnailUrl}
+							<img src={thumbnailUrl} alt={image.file_name} />
+						{:else}
+							<div class="noPreview">No preview</div>
+						{/if}
+					</button>
+				{/each}
 			</div>
-		</Tabs.Content>
-	</Tabs>
+		{/if}
+	</div>
 </div>
 
 <style>
@@ -178,12 +128,11 @@
 		margin: 0;
 	}
 
-	.tabContent {
+	.content {
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		height: 100%;
-		margin: -24px;
+		overflow: hidden;
 	}
 
 	.uploadSection {
@@ -242,7 +191,7 @@
 		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 		gap: 16px;
 		align-content: start;
-		min-height: 0;
+		overflow-y: auto;
 	}
 
 	.thumbnail {
@@ -280,73 +229,5 @@
 	.noPreview {
 		color: var(--base400);
 		font-size: 13px;
-	}
-
-	/* Presets Tab Styles */
-	.presetsHeader {
-		padding: 0 8px 16px 8px;
-		border-bottom: 1px solid var(--base200);
-	}
-
-	.presetsHeader h2 {
-		margin: 0 0 8px 0;
-		font-size: 18px;
-		font-weight: 600;
-		color: var(--base900);
-	}
-
-	.description {
-		margin: 0;
-		font-size: 14px;
-		color: var(--base600);
-	}
-
-	.presetsList {
-		padding: 16px 8px;
-	}
-
-	table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-
-	thead {
-		background-color: var(--base50);
-		position: sticky;
-		top: 0;
-	}
-
-	th {
-		text-align: left;
-		padding: 12px 16px;
-		font-size: 13px;
-		font-weight: 600;
-		color: var(--base700);
-		text-transform: uppercase;
-		letter-spacing: 0.5px;
-		border-bottom: 2px solid var(--base200);
-	}
-
-	td {
-		padding: 16px;
-		border-bottom: 1px solid var(--base100);
-		font-size: 14px;
-		color: var(--base800);
-	}
-
-	tbody tr:hover {
-		background-color: var(--base50);
-	}
-
-	.badge {
-		display: inline-block;
-		padding: 2px 8px;
-		margin-left: 8px;
-		background-color: var(--action100);
-		color: var(--action700);
-		border-radius: 4px;
-		font-size: 11px;
-		font-weight: 600;
-		text-transform: uppercase;
 	}
 </style>
