@@ -94,6 +94,7 @@
 				<Input
 					placeholder="New collection code"
 					size="28"
+					variant="accent"
 					bind:value={newCollectionCode}
 					disabled={creating}
 				/>

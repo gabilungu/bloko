@@ -73,8 +73,8 @@
 		try {
 			// Add this update to the batch
 			reorderBatch.push({
-				nodeId: itemId,
-				parentId: newParentId,
+				id: itemId,
+				_parent: newParentId,
 				sort: newOrder
 			});
 
