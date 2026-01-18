@@ -11,7 +11,7 @@ export default defineConfig({
       { text: 'Driver', link: '/driver/' },
       { text: 'Database', link: '/database/' },
       { text: 'S3', link: '/s3/' },
-      { text: 'Storybook', link: '/storybook/' },
+      { text: 'Storybook', link: 'https://gabilungu.github.io/bloko/storybook/', target: '_blank' },
     ],
     sidebar: {
       '/database/': [
