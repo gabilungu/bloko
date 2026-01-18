@@ -2,9 +2,36 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import pg from 'pg';
-import { getConfig } from '../config.js';
+import { CreateBucketCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
+import { getConfig, getS3Config } from '../config.js';
+import { createS3Client } from '../../driver/s3/client.js';
 
 const { Pool } = pg;
+
+async function ensureS3Bucket() {
+  const s3Config = getS3Config();
+  if (!s3Config) {
+    return;
+  }
+
+  const s3Client = createS3Client(s3Config);
+
+  try {
+    // Check if bucket exists
+    await s3Client.send(new HeadBucketCommand({ Bucket: s3Config.bucket }));
+    console.log(`S3 bucket "${s3Config.bucket}" already exists.`);
+  } catch (error: unknown) {
+    const err = error as { name?: string };
+    if (err.name === 'NotFound' || err.name === 'NoSuchBucket') {
+      // Create the bucket
+      console.log(`Creating S3 bucket "${s3Config.bucket}"...`);
+      await s3Client.send(new CreateBucketCommand({ Bucket: s3Config.bucket }));
+      console.log(`S3 bucket "${s3Config.bucket}" created.`);
+    } else {
+      console.warn('Warning: Could not check/create S3 bucket:', (error as Error).message);
+    }
+  }
+}
 
 export async function init() {
   const config = getConfig();
@@ -53,4 +80,7 @@ export async function init() {
   } finally {
     await pool.end();
   }
+
+  // Ensure S3 bucket exists
+  await ensureS3Bucket();
 }

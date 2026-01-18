@@ -28,7 +28,6 @@ export function createImageService(s3: S3Client, config: S3Config, crud: Crud) {
      * Upload an image and generate variants
      */
     async upload(
-      collectionId: string,
       file: Buffer,
       fileName: string,
       variants: VariantConfig[] = []
@@ -42,7 +41,7 @@ export function createImageService(s3: S3Client, config: S3Config, crud: Crud) {
 
       const id = randomUUID();
       const ext = metadata.format;
-      const s3Key = `images/${collectionId}/${id}.${ext}`;
+      const s3Key = `images/${id}.${ext}`;
       const mimeType = `image/${metadata.format}`;
 
       // Upload original image
@@ -55,7 +54,6 @@ export function createImageService(s3: S3Client, config: S3Config, crud: Crud) {
 
       // Create image record
       const image = await crud.images.create({
-        _collection: collectionId,
         s3_key: s3Key,
         file_name: fileName,
         mime_type: mimeType,
@@ -71,7 +69,7 @@ export function createImageService(s3: S3Client, config: S3Config, crud: Crud) {
       const createdVariants: ImageVariant[] = [];
 
       for (const variantConfig of variants) {
-        const variant = await this.createVariant(image.id, file, variantConfig, collectionId);
+        const variant = await this.createVariant(image.id, file, variantConfig);
         createdVariants.push(variant);
       }
 
@@ -84,8 +82,7 @@ export function createImageService(s3: S3Client, config: S3Config, crud: Crud) {
     async createVariant(
       imageId: string,
       originalBuffer: Buffer,
-      variantConfig: VariantConfig,
-      collectionId: string
+      variantConfig: VariantConfig
     ): Promise<ImageVariant> {
       const { width, height, format, quality = 80 } = variantConfig;
       const sharp = await getSharp();
@@ -108,7 +105,7 @@ export function createImageService(s3: S3Client, config: S3Config, crud: Crud) {
       const variantBuffer = await transformer.toBuffer();
       const variantMetadata = await sharp(variantBuffer).metadata();
 
-      const variantKey = `images/${collectionId}/${imageId}/${width}x${height}.${format}`;
+      const variantKey = `images/${imageId}/${width}x${height}.${format}`;
 
       // Upload variant
       await s3.send(new PutObjectCommand({

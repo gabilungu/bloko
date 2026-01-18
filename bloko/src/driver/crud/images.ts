@@ -13,14 +13,6 @@ export function images(db: DB) {
       return result.rows[0] ?? null;
     },
 
-    async findByCollection(collectionId: string): Promise<Image[]> {
-      const result = await db.query(
-        'SELECT * FROM images WHERE _collection = $1 ORDER BY file_name',
-        [collectionId]
-      );
-      return result.rows;
-    },
-
     async findByS3Key(s3Key: string): Promise<Image | null> {
       const result = await db.query(
         'SELECT * FROM images WHERE s3_key = $1',
@@ -31,10 +23,10 @@ export function images(db: DB) {
 
     async create(data: ImageInsert): Promise<Image> {
       const result = await db.query(
-        `INSERT INTO images (_collection, s3_key, file_name, mime_type, format, file_size, width, height, caption, credit)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+        `INSERT INTO images (s3_key, file_name, mime_type, format, file_size, width, height, caption, credit)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
         [
-          data._collection, data.s3_key, data.file_name, data.mime_type,
+          data.s3_key, data.file_name, data.mime_type,
           data.format, data.file_size, data.width, data.height,
           data.caption, data.credit
         ]
@@ -47,10 +39,6 @@ export function images(db: DB) {
       const values: unknown[] = [];
       let idx = 1;
 
-      if (data._collection !== undefined) {
-        fields.push(`_collection = $${idx++}`);
-        values.push(data._collection);
-      }
       if (data.s3_key !== undefined) {
         fields.push(`s3_key = $${idx++}`);
         values.push(data.s3_key);

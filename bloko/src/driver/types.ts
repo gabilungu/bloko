@@ -79,7 +79,6 @@ export interface Content {
 
 export interface Image {
   id: string;
-  _collection: string;
   s3_key: string;
   file_name: string;
   mime_type: string;

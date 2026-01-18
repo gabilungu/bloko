@@ -80,7 +80,6 @@ CREATE TABLE blocks (
 
 CREATE TABLE images (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
-  _collection UUID NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
   s3_key VARCHAR(500) NOT NULL UNIQUE,
   file_name VARCHAR(255) NOT NULL,
   mime_type VARCHAR(50) NOT NULL,
@@ -157,7 +156,6 @@ CREATE INDEX idx_blocks_template ON blocks(_template);
 CREATE INDEX idx_blocks_parent ON blocks(_parent);
 CREATE INDEX idx_blocks_title_gin ON blocks USING GIN (title);
 
-CREATE INDEX idx_images_collection ON images(_collection);
 CREATE INDEX idx_images_caption_gin ON images USING GIN (caption);
 
 CREATE INDEX idx_image_variants_image ON image_variants(_image);

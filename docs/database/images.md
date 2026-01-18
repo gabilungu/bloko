@@ -1,13 +1,12 @@
 # Images
 
-Store image files and metadata. Owned by collections.
+Store image files and metadata. Images are global and can be referenced by any node.
 
 ## Table
 
 ```sql
 CREATE TABLE images (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
-  _collection UUID NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
   s3_key VARCHAR(500) NOT NULL UNIQUE,
   file_name VARCHAR(255) NOT NULL,
   mime_type VARCHAR(50) NOT NULL,
@@ -23,7 +22,6 @@ CREATE TABLE images (
 ## Indexes
 
 ```sql
-CREATE INDEX idx_images_collection ON images(_collection);
 CREATE INDEX idx_images_caption_gin ON images USING GIN (caption);
 ```
 
@@ -57,4 +55,3 @@ CREATE TRIGGER trigger_image_delete_from_nodes
 ## Cascade
 
 - **Delete**: CASCADE to image_variants, SET NULL on nodes._cover_image, REMOVE from nodes._images
-- **Collection Delete**: CASCADE

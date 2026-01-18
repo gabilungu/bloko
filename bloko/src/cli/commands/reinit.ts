@@ -2,17 +2,44 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import pg from 'pg';
-import { ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
+import { ListObjectsV2Command, DeleteObjectsCommand, CreateBucketCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
 import { getConfig, getS3Config } from '../config.js';
 import { createS3Client } from '../../driver/s3/client.js';
 
 const { Pool } = pg;
+
+async function ensureS3Bucket() {
+  const s3Config = getS3Config();
+  if (!s3Config) {
+    return;
+  }
+
+  const s3Client = createS3Client(s3Config);
+
+  try {
+    // Check if bucket exists
+    await s3Client.send(new HeadBucketCommand({ Bucket: s3Config.bucket }));
+  } catch (error: unknown) {
+    const err = error as { name?: string };
+    if (err.name === 'NotFound' || err.name === 'NoSuchBucket') {
+      // Create the bucket
+      console.log(`Creating S3 bucket "${s3Config.bucket}"...`);
+      await s3Client.send(new CreateBucketCommand({ Bucket: s3Config.bucket }));
+      console.log(`S3 bucket "${s3Config.bucket}" created.`);
+    } else {
+      console.warn('Warning: Could not check/create S3 bucket:', (error as Error).message);
+    }
+  }
+}
 
 async function clearS3Bucket() {
   const s3Config = getS3Config();
   if (!s3Config) {
     return;
   }
+
+  // Ensure bucket exists first
+  await ensureS3Bucket();
 
   console.log(`Clearing S3 bucket "${s3Config.bucket}"...`);
   const s3Client = createS3Client(s3Config);
@@ -60,7 +87,7 @@ export async function reinit() {
   const config = getConfig();
   const targetDb = config.database;
 
-  // Clear S3 bucket first
+  // Clear S3 bucket first (creates if doesn't exist)
   await clearS3Bucket();
 
   // Connect to default 'postgres' database to drop/create the target database
