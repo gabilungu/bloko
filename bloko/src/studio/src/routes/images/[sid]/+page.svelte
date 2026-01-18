@@ -9,8 +9,8 @@
 
 	let deleting = $state(false);
 
-	function getImageUrl(variant) {
-		return `${parentData.s3BaseUrl}/${variant.s3_key}`;
+	function getImageUrl(s3Key) {
+		return `${parentData.s3BaseUrl}/${s3Key}`;
 	}
 
 	function formatBytes(bytes) {
@@ -28,7 +28,7 @@
 
 		deleting = true;
 		try {
-			await deleteImage({  sid: data.image.sid });
+			await deleteImage({ id: data.image.id });
 			await invalidate('app:images');
 			goto(`/images`);
 			notifications.success('Image deleted successfully');
@@ -38,9 +38,6 @@
 			deleting = false;
 		}
 	}
-
-	// Get original variant for main preview
-	let originalVariant = $derived(data.image.variants.find((v) => v.preset === 'original'));
 </script>
 
 <div class="detailContent">
@@ -51,68 +48,53 @@
 		</button>
 	</div>
 
-	{#if originalVariant}
+	{#if data.image}
 		<div class="imagePreview">
-			<img src={getImageUrl(originalVariant)} alt={originalVariant.filename} />
+			<img src={getImageUrl(data.image.s3_key)} alt={data.image.file_name} />
 		</div>
 
 		<div class="infoSection">
-			<h3>Original</h3>
+			<h3>Image Info</h3>
 			<div class="infoGrid">
 				<div class="infoRow">
 					<span class="label">Filename:</span>
-					<span class="value">{originalVariant.filename}</span>
+					<span class="value">{data.image.file_name}</span>
 				</div>
 				<div class="infoRow">
 					<span class="label">Dimensions:</span>
-					<span class="value">{originalVariant.width} × {originalVariant.height}</span>
+					<span class="value">{data.image.width} × {data.image.height}</span>
 				</div>
 				<div class="infoRow">
 					<span class="label">Format:</span>
-					<span class="value">{originalVariant.format.toUpperCase()}</span>
+					<span class="value">{data.image.format.toUpperCase()}</span>
 				</div>
 				<div class="infoRow">
 					<span class="label">Size:</span>
-					<span class="value">{formatBytes(originalVariant.file_size)}</span>
+					<span class="value">{formatBytes(data.image.file_size)}</span>
+				</div>
+				<div class="infoRow">
+					<span class="label">MIME Type:</span>
+					<span class="value">{data.image.mime_type}</span>
 				</div>
 			</div>
 		</div>
+
+		<div class="infoSection">
+			<h3>Metadata</h3>
+			<div class="infoGrid">
+				<div class="infoRow">
+					<span class="label">ID:</span>
+					<span class="value idValue">{data.image.id}</span>
+				</div>
+				<div class="infoRow">
+					<span class="label">S3 Key:</span>
+					<span class="value">{data.image.s3_key}</span>
+				</div>
+			</div>
+		</div>
+	{:else}
+		<div class="notFound">Image not found</div>
 	{/if}
-
-	<div class="infoSection">
-		<h3>Variants ({data.image.variants.length})</h3>
-		<div class="variantsList">
-			{#each data.image.variants as variant}
-				<div class="variant">
-					<div class="variantHeader">
-						<strong>{variant.preset}</strong>
-						<span class="variantFormat">{variant.format.toUpperCase()}</span>
-					</div>
-					<div class="variantInfo">
-						{variant.width}×{variant.height} • {formatBytes(variant.file_size)}
-					</div>
-				</div>
-			{/each}
-		</div>
-	</div>
-
-	<div class="infoSection">
-		<h3>Metadata</h3>
-		<div class="infoGrid">
-			<div class="infoRow">
-				<span class="label">ID:</span>
-				<span class="value">{data.image.sid}</span>
-			</div>
-			<div class="infoRow">
-				<span class="label">Created:</span>
-				<span class="value">{new Date(data.image.created_at).toLocaleString()}</span>
-			</div>
-			<div class="infoRow">
-				<span class="label">Updated:</span>
-				<span class="value">{new Date(data.image.updated_at).toLocaleString()}</span>
-			</div>
-		</div>
-	</div>
 </div>
 
 <style>
@@ -204,6 +186,7 @@
 	.label {
 		color: var(--base600);
 		font-weight: 500;
+		flex-shrink: 0;
 	}
 
 	.value {
@@ -212,41 +195,14 @@
 		word-break: break-word;
 	}
 
-	.variantsList {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
-
-	.variant {
-		background-color: var(--base50);
-		padding: 12px;
-		border-radius: 6px;
-	}
-
-	.variantHeader {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 4px;
-	}
-
-	.variantHeader strong {
-		font-size: 13px;
-		color: var(--base900);
-	}
-
-	.variantFormat {
+	.idValue {
+		font-family: monospace;
 		font-size: 11px;
-		font-weight: 600;
-		color: var(--base600);
-		background-color: var(--base200);
-		padding: 2px 6px;
-		border-radius: 3px;
 	}
 
-	.variantInfo {
-		font-size: 12px;
-		color: var(--base600);
+	.notFound {
+		padding: 48px;
+		text-align: center;
+		color: var(--base500);
 	}
 </style>

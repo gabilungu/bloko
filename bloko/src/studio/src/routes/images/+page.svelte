@@ -7,17 +7,17 @@
 	let { data } = $props();
 
 	let uploading = $state(false);
-	let selectedSid = $derived($page.params.id ? parseInt($page.params.id, 10) : null);
+	let selectedId = $derived($page.params.sid || null);
 
 	// Tab management
 	let activeTab = $state('images');
 
-	function selectImage(sid) {
+	function selectImage(id) {
 		// If clicking the same image, deselect it
-		if (selectedSid === sid) {
+		if (selectedId === id) {
 			goto(`/images`);
 		} else {
-			goto(`/images/${sid}`);
+			goto(`/images/${id}`);
 		}
 	}
 
@@ -52,22 +52,13 @@
 		}
 	}
 
-	function getImageUrl(variant) {
-		return `${data.s3BaseUrl}/${variant.s3_key}`;
+	function getImageUrl(s3Key) {
+		return `${data.s3BaseUrl}/${s3Key}`;
 	}
 
 	function getImageThumbnail(image) {
-		// Try to get s400 variant, fallback to smallest available, then original
-		const s400 = image.variants.find(v => v.preset === 's400');
-		if (s400) return getImageUrl(s400);
-
-		const smallest = image.variants
-			.filter(v => v.preset !== 'original')
-			.sort((a, b) => a.width - b.width)[0];
-		if (smallest) return getImageUrl(smallest);
-
-		const original = image.variants.find(v => v.preset === 'original');
-		return original ? getImageUrl(original) : '';
+		// Use the original image s3_key directly
+		return image.s3_key ? getImageUrl(image.s3_key) : '';
 	}
 </script>
 
@@ -109,11 +100,11 @@
 							{@const thumbnailUrl = getImageThumbnail(image)}
 							<button
 								class="thumbnail"
-								class:selected={selectedSid === image.sid}
-								onclick={() => selectImage(image.sid)}
+								class:selected={selectedId === image.id}
+								onclick={() => selectImage(image.id)}
 							>
 								{#if thumbnailUrl}
-									<img src={thumbnailUrl} alt="Image {image.sid}" />
+									<img src={thumbnailUrl} alt={image.file_name} />
 								{:else}
 									<div class="noPreview">No preview</div>
 								{/if}
