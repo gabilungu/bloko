@@ -76,6 +76,26 @@ const preset: Preset = {
             },
           ],
         },
+        {
+          template: { code: 'procedure-template', title: {"en":"Procedure Template","ro":"Șablon Procedură"} },
+          blocks: [
+            {
+              block: { code: 'description', title: {"en":"Description","ro":"Descriere"}, content_type: 'text', sort: 1 },
+            },
+            {
+              block: { code: 'indications', title: {"en":"Indications","ro":"Indicații"}, content_type: 'text', sort: 2 },
+            },
+            {
+              block: { code: 'technique', title: {"en":"Technique","ro":"Tehnică"}, content_type: 'text', sort: 3 },
+            },
+            {
+              block: { code: 'risks', title: {"en":"Risks & Side Effects","ro":"Riscuri și Efecte Secundare"}, content_type: 'text', sort: 4 },
+            },
+            {
+              block: { code: 'recovery', title: {"en":"Recovery","ro":"Recuperare"}, content_type: 'text', sort: 5 },
+            },
+          ],
+        },
       ],
       nodes: [
         {
@@ -380,26 +400,6 @@ const preset: Preset = {
     {
       collection: { code: 'glossary', sort: 3, notes: 'Glossary of dermatology terms' },
       templates: [
-        {
-          template: { code: 'procedure-template', title: {"en":"Procedure Template","ro":"Șablon Procedură"} },
-          blocks: [
-            {
-              block: { code: 'description', title: {"en":"Description","ro":"Descriere"}, content_type: 'text', sort: 1 },
-            },
-            {
-              block: { code: 'indications', title: {"en":"Indications","ro":"Indicații"}, content_type: 'text', sort: 2 },
-            },
-            {
-              block: { code: 'technique', title: {"en":"Technique","ro":"Tehnică"}, content_type: 'text', sort: 3 },
-            },
-            {
-              block: { code: 'risks', title: {"en":"Risks & Side Effects","ro":"Riscuri și Efecte Secundare"}, content_type: 'text', sort: 4 },
-            },
-            {
-              block: { code: 'recovery', title: {"en":"Recovery","ro":"Recuperare"}, content_type: 'text', sort: 5 },
-            },
-          ],
-        },
         {
           template: { code: 'term', title: {"en":"Term","ro":"Termen"}, notes: 'Template for glossary terms' },
           blocks: [
