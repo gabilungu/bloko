@@ -22,16 +22,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: docs/package-lock.json
 
-      - name: Install dependencies
+      - name: Install docs dependencies
         run: npm ci
         working-directory: docs
 
       - name: Build docs
         run: npm run build
         working-directory: docs
+
+      - name: Install studio dependencies
+        run: npm ci
+        working-directory: bloko/src/studio
+
+      - name: Build Storybook
+        run: npm run build-storybook
+        working-directory: bloko/src/studio
+
+      - name: Copy Storybook to docs
+        run: mv bloko/src/studio/storybook-static docs/.vitepress/dist/storybook
 
       - uses: actions/configure-pages@v4
 
