@@ -7,14 +7,12 @@ export async function load({ depends }) {
 	const allImages = await bloko.crud.images.findAll();
 	const images = allImages.slice(0, 100);
 
-	// Construct S3 base URL for image previews (shared S3 config from env)
-	const endpoint = process.env.BLOKO_S3_ENDPOINT || '';
-	const bucket = process.env.BLOKO_S3_BUCKET || '';
-	const forcePathStyle = process.env.BLOKO_S3_FORCE_PATH_STYLE === 'true';
+	// Construct S3 base URL for image previews (use same defaults as bloko.js)
+	const endpoint = process.env.BLOKO_S3_ENDPOINT || 'http://localhost:9000';
+	const bucket = process.env.BLOKO_S3_BUCKET || 'bloko';
 
-	const s3BaseUrl = forcePathStyle
-		? `${endpoint}/${bucket}`
-		: endpoint;
+	// Use path style for MinIO compatibility (endpoint/bucket/key)
+	const s3BaseUrl = `${endpoint}/${bucket}`;
 
 	return {
 		images,
