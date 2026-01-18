@@ -1,0 +1,104 @@
+/**
+ * Design System Colors
+ * 
+ * Color definitions for the admin interface design system.
+ * These colors are used throughout surfaces, components, and themes.
+ */
+
+:root {
+    /* Base Colors - Grayscale palette from white (0) to black (1000) */
+    --base0: #ffffff;
+    --base50: #f2f2f3;
+    --base100: #e6e4e7;
+    --base200: #cdc9cf;
+    --base300: #b4afb6;
+    --base400: #9b949e;
+    --base500: #827986;
+    --base600: #68616b;
+    --base700: #4e4950;
+    --base800: #343036;
+    --base900: #1a181b;
+    --base1000: #000000;
+
+    /* Action Colors - Main brand/action colors */
+    --action50: #E6F5FF;
+    --action100: #cfe9fc;
+    --action200: #9eccfa;
+    --action300: #6ea7f7;
+    --action400: #3d7af5;
+    --action500: #0d46f2;
+    --action600: #0a38c2;
+    --action700: #082a91;
+    --action800: #051c61;
+    --action900: #030e30;
+
+    /* Semantic Colors - Status and feedback */
+    --success50: hsl(138, 76%, 95%);
+    --success100: hsl(141, 84%, 88%);
+    --success200: hsl(141, 79%, 80%);
+    --success300: hsl(142, 77%, 68%);
+    --success400: hsl(142, 69%, 53%);
+    --success500: hsl(142, 71%, 40%);
+    --success600: hsl(142, 76%, 31%);
+    --success700: hsl(142, 72%, 24%);
+    --success800: hsl(143, 64%, 19%);
+    --success900: hsl(144, 61%, 15%);
+
+    --warning50: hsl(48, 100%, 96%);
+    --warning100: hsl(48, 96%, 89%);
+    --warning200: hsl(48, 97%, 77%);
+    --warning300: hsl(46, 97%, 65%);
+    --warning400: hsl(43, 96%, 56%);
+    --warning500: hsl(38, 92%, 50%);
+    --warning600: hsl(32, 95%, 44%);
+    --warning700: hsl(26, 90%, 37%);
+    --warning800: hsl(23, 83%, 31%);
+    --warning900: hsl(22, 78%, 26%);
+
+    --danger50: hsl(0, 90%, 95%);
+    --danger100: hsl(0, 90%, 90%);
+    --danger200: hsl(0, 90%, 80%);
+    --danger300: hsl(0, 90%, 70%);
+    --danger400: hsl(0, 90%, 60%);
+    --danger500: hsl(0, 90%, 50%);
+    --danger600: hsl(0, 90%, 40%);
+    --danger700: hsl(0, 90%, 30%);
+    --danger800: hsl(0, 90%, 20%);
+    --danger900: hsl(0, 90%, 10%);
+
+    --info50: hsl(204, 100%, 97%);
+    --info100: hsl(204, 94%, 94%);
+    --info200: hsl(201, 94%, 86%);
+    --info300: hsl(199, 95%, 74%);
+    --info400: hsl(198, 93%, 60%);
+    --info500: hsl(199, 89%, 48%);
+    --info600: hsl(200, 98%, 39%);
+    --info700: hsl(201, 96%, 32%);
+    --info800: hsl(201, 90%, 27%);
+    --info900: hsl(202, 80%, 24%);
+
+    /* Focus Colors - Highlight and selection states */
+    --focus50: #FFFBE5;
+    --focus100: #fff7cc;
+    --focus200: #ffee99;
+    --focus300: #ffe566;
+    --focus400: #ffdd33;
+    --focus500: #ffcc00;
+    --focus600: #cc9900;
+    --focus700: #996b00;
+    --focus800: #664200;
+    --focus900: #331f00;
+
+    --accent50: hsl(25, 30%, 95%);
+    --accent100: hsl(25, 30%, 90%);
+    --accent150: hsl(25, 30%, 85%);
+    --accent200: hsl(25, 30%, 80%);
+    --accent300: hsl(25, 30%, 70%);
+    --accent400: hsl(25, 30%, 60%);
+    --accent500: hsl(25, 30%, 50%);
+    --accent600: hsl(25, 30%, 40%);
+    --accent700: hsl(25, 30%, 30%);
+    --accent800: hsl(25, 30%, 20%);
+    --accent900: hsl(25, 30%, 15%);
+    --accent950: hsl(25, 30%, 10%);
+}
