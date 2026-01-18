@@ -1,6 +1,6 @@
 {
 	"name": "bloko",
-	"version": "0.0.33",
+	"version": "0.0.34",
 	"type": "module",
 	"description": "Multi-language CMS driver for PostgreSQL",
 	"main": "dist/driver/index.js",
@@ -21,6 +21,10 @@
 		"test:run": "vitest run",
 		"prepublishOnly": "npm run build"
 	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/gabilungu/bloko"
+	},
 	"keywords": [
 		"cms",
 		"postgresql",
@@ -28,8 +32,8 @@
 		"multilingual",
 		"s3"
 	],
-	"author": "",
-	"license": "UNLICENSED",
+	"author": "gabilungu",
+	"license": "MIT",
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.700.0",
 		"pg": "^8.13.1",
