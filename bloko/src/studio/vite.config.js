@@ -16,6 +16,7 @@ export default defineConfig({
 		external: ['sharp', 'pg', '@aws-sdk/client-s3']
 	},
 	server: {
+		port: 3333,
 		fs: {
 			allow: ['.', '../../dist/driver']
 		}

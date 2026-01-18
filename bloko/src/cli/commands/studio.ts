@@ -2,7 +2,7 @@ import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-export async function studio(port: number = 4173) {
+export async function studio(port: number = 3333) {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = dirname(__filename);
 
