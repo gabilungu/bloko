@@ -9,6 +9,7 @@ export default defineConfig({
       { text: 'Home', link: '/' },
       { text: 'CLI', link: '/cli/' },
       { text: 'Driver', link: '/driver/' },
+      { text: 'Studio', link: '/studio/' },
       { text: 'Database', link: '/database/' },
       { text: 'S3', link: '/s3/' },
       { text: 'Storybook', link: 'https://gabilungu.github.io/bloko/storybook/', target: '_blank' },
@@ -121,6 +122,14 @@ export default defineConfig({
           text: 'S3 Storage',
           items: [
             { text: 'Overview', link: '/s3/' },
+          ],
+        },
+      ],
+      '/studio/': [
+        {
+          text: 'Studio',
+          items: [
+            { text: 'Overview', link: '/studio/' },
           ],
         },
       ],
