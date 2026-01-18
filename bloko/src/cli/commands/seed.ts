@@ -66,9 +66,54 @@ async function seedCollection(
     blockMap[templateData.template.code] = blocks;
   }
 
-  // Create nodes
+  // Create nodes and build node code map
+  const nodeCodeMap: Record<string, string> = {};
   for (const nodeData of data.nodes) {
-    await seedNode(bloko, collection.id, templateMap, blockMap, nodeTypeMap, nodeData, null);
+    await seedNode(bloko, collection.id, templateMap, blockMap, nodeTypeMap, nodeData, null, nodeCodeMap);
+  }
+
+  // Create relation types
+  const relationTypeMap: Record<string, string> = {};
+  if (data.relationTypes) {
+    console.log('  Creating relation types...');
+    for (const rt of data.relationTypes) {
+      const created = await bloko.crud.nodeRelationTypes.create({
+        _collection: collection.id,
+        code: rt.code,
+        title: rt.title,
+        reverse_title: rt.reverse_title,
+        notes: rt.notes || null,
+      });
+      relationTypeMap[rt.code] = created.id;
+      console.log(`    Created relation type: ${rt.code}`);
+    }
+  }
+
+  // Create relations
+  if (data.relations) {
+    console.log('  Creating relations...');
+    for (const rel of data.relations) {
+      const relationTypeId = relationTypeMap[rel.relationTypeCode];
+      const fromNodeId = nodeCodeMap[rel.fromNodeCode];
+      const toNodeId = nodeCodeMap[rel.toNodeCode];
+
+      if (!relationTypeId) {
+        throw new Error(`Relation type not found: ${rel.relationTypeCode}`);
+      }
+      if (!fromNodeId) {
+        throw new Error(`From node not found: ${rel.fromNodeCode}`);
+      }
+      if (!toNodeId) {
+        throw new Error(`To node not found: ${rel.toNodeCode}`);
+      }
+
+      await bloko.crud.nodeRelations.create({
+        _node_relation_type: relationTypeId,
+        _from: fromNodeId,
+        _to: toNodeId,
+      });
+      console.log(`    Created relation: ${rel.fromNodeCode} --[${rel.relationTypeCode}]--> ${rel.toNodeCode}`);
+    }
   }
 }
 
@@ -79,7 +124,10 @@ async function seedTemplate(
 ): Promise<{ template: { id: string }; blocks: Record<string, string> }> {
   console.log(`  Creating template: ${data.template.code}`);
   const template = await bloko.crud.templates.create({
-    ...data.template,
+    code: data.template.code,
+    title: data.template.title ?? null,
+    sort: data.template.sort ?? null,
+    notes: data.template.notes ?? null,
     _collection: collectionId,
   });
 
@@ -88,7 +136,11 @@ async function seedTemplate(
   async function createBlocks(blocks: BlockData[], parentId: string | null) {
     for (const blockData of blocks) {
       const block = await bloko.crud.blocks.create({
-        ...blockData.block,
+        code: blockData.block.code,
+        title: blockData.block.title ?? null,
+        content_type: blockData.block.content_type ?? null,
+        sort: blockData.block.sort ?? null,
+        notes: blockData.block.notes ?? null,
         _template: template.id,
         _parent: parentId,
       });
@@ -112,7 +164,8 @@ async function seedNode(
   blockMap: Record<string, Record<string, string>>,
   nodeTypeMap: Record<string, string>,
   data: NodeData,
-  parentId: string | null
+  parentId: string | null,
+  nodeCodeMap: Record<string, string>
 ) {
   const { templateCode, nodeTypeCode, ...nodeFields } = data.node;
   const templateId = templateMap[templateCode];
@@ -127,12 +180,23 @@ async function seedNode(
 
   console.log(`    Creating node: ${data.node.code}`);
   const node = await bloko.crud.nodes.create({
-    ...nodeFields,
+    code: nodeFields.code,
+    title: nodeFields.title ?? null,
+    subtitle: nodeFields.subtitle ?? null,
+    slug: nodeFields.slug ?? null,
+    sort: nodeFields.sort ?? null,
+    sort_children_by: nodeFields.sort_children_by ?? null,
+    _cover_image: nodeFields._cover_image ?? null,
+    _images: nodeFields._images ?? null,
+    notes: nodeFields.notes ?? null,
     _collection: collectionId,
     _template: templateId,
     _node_type: nodeTypeId,
     _parent: parentId,
   });
+
+  // Track node code to id mapping for relations
+  nodeCodeMap[data.node.code] = node.id;
 
   // Create contents
   if (data.contents) {
@@ -158,7 +222,7 @@ async function seedNode(
   // Create child nodes
   if (data.children) {
     for (const childData of data.children) {
-      await seedNode(bloko, collectionId, templateMap, blockMap, nodeTypeMap, childData, node.id);
+      await seedNode(bloko, collectionId, templateMap, blockMap, nodeTypeMap, childData, node.id, nodeCodeMap);
     }
   }
 }

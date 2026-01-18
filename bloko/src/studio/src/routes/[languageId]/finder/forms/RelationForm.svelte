@@ -248,9 +248,9 @@
 			{#each outgoingRelations as relation}
 				<div class="relationItem">
 					<span class="relationText">
-						<span class="nodeCode">{node.code}</span>
-						<span class="relationCode">{relation.relation_type_code}</span>
-						<span class="nodeCode">{relation.to_node_code}</span>
+						<span class="nodeCode">{node.code || node.title?.[data.languageId] || 'unknown'}</span>
+						<span class="relationCode">{relation.relation_type_title?.[data.languageId] || relation.relation_type_code}</span>
+						<a class="nodeLink" href="/{data.languageId}/finder/{relation.to_node_collection}/nodes/{relation.to_node_path}">{relation.to_node_code}</a>
 					</span>
 					<Button
 						label="×"
@@ -373,9 +373,9 @@
 			{#each incomingRelations as relation}
 				<div class="relationItem">
 					<span class="relationText">
-						<span class="nodeCode">{relation.from_node_code}</span>
-						<span class="relationCode">{relation.relation_type_code}</span>
-						<span class="nodeCode">{node.code}</span>
+						<span class="nodeCode">{node.code || node.title?.[data.languageId] || 'unknown'}</span>
+						<span class="relationCode">{relation.relation_type_title?.[data.languageId] || relation.relation_type_code}</span>
+						<a class="nodeLink" href="/{data.languageId}/finder/{relation.from_node_collection}/nodes/{relation.from_node_path}">{relation.from_node_code}</a>
 					</span>
 					<Button
 						label="×"
@@ -487,6 +487,16 @@
 	.nodeCode {
 		font-weight: 600;
 		color: var(--base700);
+	}
+
+	.nodeLink {
+		font-weight: 600;
+		color: var(--action500);
+		text-decoration: none;
+	}
+
+	.nodeLink:hover {
+		text-decoration: underline;
 	}
 
 	.relationCode {

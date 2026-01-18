@@ -17,18 +17,6 @@
 	// Translation fields - initialize from block
 	let editTitle = $state({ ...(block?.title || {}) });
 
-	function formatTimestamp(timestamp) {
-		if (!timestamp) return '';
-		const date = new Date(timestamp);
-		const day = String(date.getDate()).padStart(2, '0');
-		const month = date.toLocaleString('en', { month: 'short' });
-		const year = date.getFullYear();
-		const hours = String(date.getHours()).padStart(2, '0');
-		const minutes = String(date.getMinutes()).padStart(2, '0');
-		const seconds = String(date.getSeconds()).padStart(2, '0');
-		return `${day} ${month} ${year} - ${hours}:${minutes}:${seconds}`;
-	}
-
 	// Only reset edit fields when switching to a different block
 	let lastBlockId = $state(block?.id);
 	$effect(() => {

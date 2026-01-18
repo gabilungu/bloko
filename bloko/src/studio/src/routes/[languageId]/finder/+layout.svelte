@@ -22,15 +22,16 @@
 	);
 
 	function selectCollection(itemId) {
+		// If null is passed, deselect
+		if (itemId === null) {
+			goto(`/${data.languageId}/finder`);
+			return;
+		}
+
 		const item = treeItems.find((t) => t.id === itemId);
 		if (!item) return;
 
-		// If clicking the same collection, deselect it
-		if (selectedCollectionId === item.collectionId) {
-			goto(`/${data.languageId}/finder`);
-		} else {
-			goto(`/${data.languageId}/finder/${item.collectionId}/nodes`);
-		}
+		goto(`/${data.languageId}/finder/${item.collectionId}/nodes`);
 	}
 
 	async function onReorder(updates) {

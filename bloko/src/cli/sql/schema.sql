@@ -3,6 +3,7 @@
 
 -- Enable extensions
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS unaccent;
 
 -- UUIDv7 function
 CREATE OR REPLACE FUNCTION uuidv7() RETURNS uuid AS $$
@@ -362,7 +363,8 @@ BEGIN
   LOOP
     title_value := NEW.title->>lang;
     IF title_value IS NOT NULL AND title_value != '' THEN
-      base_slug := lower(regexp_replace(title_value, '[^a-zA-Z0-9]+', '-', 'g'));
+      -- Remove accents first (ă→a, é→e, etc.), then slugify
+      base_slug := lower(regexp_replace(unaccent(title_value), '[^a-zA-Z0-9]+', '-', 'g'));
       base_slug := trim(both '-' from base_slug);
 
       final_slug := base_slug;

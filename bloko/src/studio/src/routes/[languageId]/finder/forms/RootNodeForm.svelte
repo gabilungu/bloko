@@ -2,7 +2,6 @@
 	import { Input, Textarea, FormField, Button, LabeledText } from '$lib/ui';
 	import { notifications } from '$lib/ui/Notification/Notification.svelte';
 	import { goto, invalidate } from '$app/navigation';
-	import { page } from '$app/stores';
 	import { updateRootNode, deleteRootNode } from '../data.remote.js';
 	import { detailedMode } from '$lib/globals.svelte.js';
 
@@ -13,24 +12,12 @@
 	let saving = $state(false);
 	let deleting = $state(false);
 
-	// Track the last root node id to only update when switching root nodes
-	let lastRootNodeId = $state(data.collection?.id);
-
-	function formatTimestamp(timestamp) {
-		if (!timestamp) return '';
-		const date = new Date(timestamp);
-		const day = String(date.getDate()).padStart(2, '0');
-		const month = date.toLocaleString('en', { month: 'short' });
-		const year = date.getFullYear();
-		const hours = String(date.getHours()).padStart(2, '0');
-		const minutes = String(date.getMinutes()).padStart(2, '0');
-		const seconds = String(date.getSeconds()).padStart(2, '0');
-		return `${day} ${month} ${year} - ${hours}:${minutes}:${seconds}`;
-	}
+	// Track the last collection id to only update when switching collections
+	let lastCollectionId = $state(data.collection?.id);
 
 	$effect(() => {
-		if (data.collection?.id !== lastRootNodeId) {
-			lastRootNodeId = data.collection?.id;
+		if (data.collection?.id !== lastCollectionId) {
+			lastCollectionId = data.collection?.id;
 			editCode = data.collection?.code || '';
 			editNotes = data.collection?.notes || '';
 		}
@@ -50,7 +37,7 @@
 				code: code || null,
 				notes: notes
 			});
-			await invalidate('app:root-nodes');
+			await invalidate('app:collections');
 			notifications.success('Saved');
 		} catch (error) {
 			notifications.error('Failed to save');
@@ -64,14 +51,14 @@
 
 	async function onDelete() {
 		if (!data.collection) return;
-		if (!confirm('Delete this root node? This will delete all templates, nodes, and related data.')) return;
+		if (!confirm('Delete this collection? This will delete all templates, nodes, and related data.')) return;
 
 		deleting = true;
 		try {
 			await deleteRootNode({ id: data.collection.id });
 			await goto(`/${data.languageId}/finder`);
-			await invalidate('app:root-nodes');
-			notifications.success('Root node deleted');
+			await invalidate('app:collections');
+			notifications.success('Collection deleted');
 		} catch (error) {
 			notifications.error('Failed to delete');
 		} finally {
@@ -80,94 +67,87 @@
 	}
 </script>
 
-<div class="root-node-form">
+<div class="rightArea">
 	<div class="header">
-		<span class="title">Root Node</span>
-		<span class="id">id: {data.collection?.id}</span>
-	</div>
-
-	{#if detailedMode.value}
-		<div class="metadata">
-			<LabeledText label="created_at" text={formatTimestamp(data.collection?.created_at)} textSize="12px" textColor="var(--base600)" labelColor="var(--base300)" />
-			<LabeledText label="updated_at" text={formatTimestamp(data.collection?.updated_at)} textSize="12px" textColor="var(--base600)" labelColor="var(--base300)" />
-		</div>
-	{/if}
-
-	<FormField label="code" hint="Unique identifier">
-		<Input
-			id="root-node-code"
-			bind:value={editCode}
-			size="28"
-			placeholder="root-node-code"
-			onblur={onBlur}
-			disabled={saving}
-		/>
-	</FormField>
-
-	<FormField label="notes" hint="Description">
-		<Textarea
-			id="root-node-notes"
-			bind:value={editNotes}
-			size="28"
-			placeholder="Notes..."
-			onblur={onBlur}
-			disabled={saving}
-			rows={3}
-		/>
-	</FormField>
-
-	<div class="actions">
+		<h2 class="title">Edit Collection</h2>
 		<Button
+			label="Delete"
 			intent="danger"
-			onclick={onDelete}
-			loading={deleting}
-			disabled={saving}
 			size="28"
-		>
-			Delete Root Node
-		</Button>
+			type="button"
+			onclick={onDelete}
+			disabled={deleting || saving}
+		/>
+	</div>
+	<div class="editor">
+		{#if detailedMode.value}
+			<div class="metaRow">
+				<LabeledText label="id" text={String(data.collection?.id ?? '')} textSize="12px" textColor="var(--base600)" labelColor="var(--base300)" />
+				<LabeledText label="sort" text={String(data.collection?.sort ?? '')} textSize="12px" textColor="var(--base600)" labelColor="var(--base300)" />
+			</div>
+		{/if}
+		<FormField label="Code">
+			{#snippet children()}
+				<Input
+					id="collection-code"
+					size="32"
+					placeholder="Collection code"
+					variant="accent"
+					bind:value={editCode}
+					onblur={onBlur}
+				/>
+			{/snippet}
+		</FormField>
+		<FormField label="Notes">
+			{#snippet children()}
+				<Textarea
+					id="collection-notes"
+					placeholder="Description (optional)"
+					variant="accent"
+					bind:value={editNotes}
+					onblur={onBlur}
+					rows={3}
+				/>
+			{/snippet}
+		</FormField>
 	</div>
 </div>
 
 <style>
-	.root-node-form {
+	.rightArea {
+		width: 700px;
+		background-color: var(--base100);
+		flex: 0 0 auto;
 		display: flex;
 		flex-direction: column;
-		gap: 16px;
-		padding: 20px;
-		background: var(--base0);
-		border-radius: 4px;
+		overflow-y: auto;
+		gap: 1px;
 	}
-
 	.header {
 		display: flex;
-		justify-content: space-between;
 		align-items: center;
-		padding-bottom: 12px;
-		border-bottom: 1px solid var(--base200);
-	}
-
-	.title {
-		font-size: 14px;
-		font-weight: 600;
-		color: var(--base800);
-	}
-
-	.id {
-		font-size: 11px;
-		font-family: 'Courier New', monospace;
-		color: var(--base500);
-	}
-
-	.metadata {
-		display: flex;
 		gap: 16px;
+		padding: 16px 32px;
+		background-color: var(--base0);
 	}
-
-	.actions {
-		display: flex;
-		justify-content: flex-end;
-		padding-top: 12px;
-		border-top: 1px solid var(--base200);
+	.title {
+		font-size: 18px;
+		font-weight: 600;
+		margin: 0;
+		color: var(--base900);
+	}
+	.editor {
+		display: grid;
+		grid-template-columns: 1fr;
+		grid-auto-rows: max-content;
+		gap: 16px;
+		padding: 32px;
+		background-color: var(--base0);
+		flex: 1;
+	}
+	.metaRow {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
 	}
 </style>

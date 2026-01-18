@@ -1,16 +1,17 @@
 /**
  * Generate a consistent hue (0-360) from a string
+ * Uses a better hash function to avoid collisions for similar short strings
  * @param {string} str - Input string
  * @returns {number} - Hue value between 0 and 360
  */
 export function stringToHue(str) {
 	if (!str) return 0;
 
-	// Simple hash function
-	let hash = 0;
+	// FNV-1a hash - better distribution for short strings
+	let hash = 2166136261;
 	for (let i = 0; i < str.length; i++) {
-		hash = str.charCodeAt(i) + ((hash << 5) - hash);
-		hash = hash & hash; // Convert to 32bit integer
+		hash ^= str.charCodeAt(i);
+		hash = Math.imul(hash, 16777619);
 	}
 
 	// Map hash to 0-360 range
