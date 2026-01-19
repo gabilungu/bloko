@@ -54,6 +54,7 @@ jobs:
         working-directory: bloko
 
   publish-bloko-studio:
+    needs: publish-bloko
     runs-on: ubuntu-latest
     environment: npm
     permissions:

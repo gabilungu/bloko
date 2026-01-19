@@ -3,8 +3,6 @@ import { createCrud, type Crud } from './crud/index.js';
 import { createApi, type Api } from './api/index.js';
 import { createS3Client, createImageService, type S3Config, type ImageService } from './s3/index.js';
 
-export const VERSION = '0.0.45';
-
 export interface BlokoConfig {
   db: DBConfig;
   s3?: S3Config;
