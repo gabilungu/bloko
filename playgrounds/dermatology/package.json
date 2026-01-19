@@ -17,6 +17,6 @@
 		"vite": "^7.2.6"
 	},
 	"dependencies": {
-		"bloko": "file:../../bloko"
+		"bloko": "^0.0.45"
 	}
 }

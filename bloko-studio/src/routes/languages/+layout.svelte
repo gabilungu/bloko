@@ -101,7 +101,9 @@
 		</div>
 		<div class="leftFooter">
 			<form onsubmit={onCreate} class="createForm">
-				<Input placeholder="New language ID" size="28" bind:value={newId} />
+				<Input placeholder="ID (e.g. en)" size="28" bind:value={newId} />
+				<Input placeholder="Title (e.g. English)" size="28" bind:value={newTitle} />
+				<button type="submit" hidden></button>
 			</form>
 		</div>
 	</div>
@@ -157,5 +159,7 @@
 	}
 	.createForm {
 		display: flex;
+		flex-direction: column;
+		gap: 4px;
 	}
 </style>
