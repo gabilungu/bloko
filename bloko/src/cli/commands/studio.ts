@@ -1,22 +1,13 @@
 import { spawn } from 'child_process';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 
-export async function studio(port: number = 3333) {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = dirname(__filename);
+export async function studio(port: number = 4173) {
+  console.log('Starting Bloko Studio...');
 
-  // Path to the built studio server
-  const studioPath = join(__dirname, '..', '..', 'studio', 'index.js');
-
-  console.log(`Starting Bloko Studio on http://localhost:${port}`);
-
-  const child = spawn('node', [studioPath], {
-    env: {
-      ...process.env,
-      PORT: port.toString()
-    },
-    stdio: 'inherit'
+  // Use npx to run bloko-studio (downloads on-demand if not installed)
+  const child = spawn('npx', ['bloko-studio', port.toString()], {
+    stdio: 'inherit',
+    env: process.env,
+    shell: true
   });
 
   child.on('error', (error) => {

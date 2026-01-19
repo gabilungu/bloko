@@ -1,4 +1,4 @@
-import { createBloko } from '$driver/index.js';
+import { createBloko } from 'bloko';
 
 // Use globalThis with a unique key to share instance across bundled chunks
 const BLOKO_KEY = '__bloko_studio_instance__';

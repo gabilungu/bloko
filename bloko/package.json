@@ -1,6 +1,6 @@
 {
 	"name": "bloko",
-	"version": "0.0.41",
+	"version": "0.0.42",
 	"type": "module",
 	"description": "Multi-language CMS driver for PostgreSQL",
 	"main": "dist/driver/index.js",
@@ -12,11 +12,8 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "tsc && cp -r src/cli/sql dist/cli/ && npm run build:studio",
-		"build:driver": "tsc && cp -r src/cli/sql dist/cli/",
-		"build:studio": "cd src/studio && npm install && npm run build",
+		"build": "tsc && cp -r src/cli/sql dist/cli/",
 		"dev": "tsc --watch",
-		"dev:studio": "cd src/studio && npm run dev",
 		"test": "vitest",
 		"test:run": "vitest run",
 		"prepublishOnly": "npm run build"
