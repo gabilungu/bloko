@@ -1,5 +1,7 @@
 # Image Variants
 
+Low-level CRUD for image variant records. For high-level usage with automatic variant generation, see [Images API](../api/images.md).
+
 ## Methods
 
 ```typescript
@@ -64,49 +66,4 @@ const variants = await bloko.crud.imageVariants.findByImage(image.id);
 await bloko.crud.imageVariants.deleteByImage(image.id);
 ```
 
-**Note:** Variants are typically created automatically by `bloko.images.getUrl()` on-demand.
-
-## Using the Image Service
-
-The recommended way to work with images is through the `bloko.images` service:
-
-```typescript
-// Get URL with auto-generated variant
-const url = await bloko.images.getUrl(imageId, {
-  width: 1000,      // Scale to 1000px wide
-  height: null,     // Auto height (maintain aspect ratio)
-  format: 'webp',   // Default: 'webp'
-  quality: 80,      // Default: 80
-});
-
-// Get URL for a specific crop
-const thumbnailUrl = await bloko.images.getUrl(imageId, {
-  width: 200,
-  height: 200,  // Both specified = crop/cover
-});
-
-// Get original (re-encoded to webp at quality 80)
-const originalUrl = await bloko.images.getUrl(imageId);
-```
-
-### Dimension Behavior
-
-| width | height | result |
-|-------|--------|--------|
-| null | null | Original dimensions (re-encode to format/quality) |
-| 1000 | null | Scale to 1000px wide, auto height |
-| null | 600 | Scale to 600px tall, auto width |
-| 1000 | 600 | Crop/cover to exactly 1000×600 |
-
-### No Upscaling
-
-If requested dimensions exceed original, output is clamped:
-
-```typescript
-// Original: 800×600
-await bloko.images.getUrl(imageId, { width: 2000 });
-// Returns: 800×600 (clamped, no upscaling)
-
-await bloko.images.getUrl(imageId, { width: 400 });
-// Returns: 400×300 (scaled down)
-```
+**Note:** Variants are typically created automatically by `bloko.images.getUrl()`. Use the [Images API](../api/images.md) for the recommended approach.

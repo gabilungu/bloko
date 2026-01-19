@@ -74,6 +74,7 @@ export default defineConfig({
             { text: 'Overview', link: '/driver/api/' },
             { text: 'Collections', link: '/driver/api/collections' },
             { text: 'Nodes', link: '/driver/api/nodes' },
+            { text: 'Images', link: '/driver/api/images' },
           ],
         },
         {
@@ -107,6 +108,8 @@ export default defineConfig({
             { text: 'init', link: '/cli/commands/init' },
             { text: 'reinit', link: '/cli/commands/reinit' },
             { text: 'seed', link: '/cli/commands/seed' },
+            { text: 'studio', link: '/cli/commands/studio' },
+            { text: 'images', link: '/cli/commands/images' },
           ],
         },
         {

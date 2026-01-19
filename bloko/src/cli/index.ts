@@ -25,6 +25,7 @@ import { init } from './commands/init.js';
 import { reinit } from './commands/reinit.js';
 import { seed } from './commands/seed.js';
 import { studio } from './commands/studio.js';
+import { listOrphanImages, cleanupOrphanImages, assignImageToNode } from './commands/images.js';
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -50,6 +51,32 @@ async function main() {
       case 'studio':
         const port = args[1] ? parseInt(args[1], 10) : 4173;
         await studio(port);
+        break;
+      case 'images':
+        const subCmd = args[1];
+        switch (subCmd) {
+          case 'orphans':
+            await listOrphanImages();
+            break;
+          case 'cleanup':
+            await cleanupOrphanImages();
+            break;
+          case 'assign':
+            const imgId = args[2];
+            const nodeId = args[3];
+            if (!imgId || !nodeId) {
+              console.error('Usage: bloko images assign <imageId> <nodeId>');
+              process.exit(1);
+            }
+            await assignImageToNode(imgId, nodeId);
+            break;
+          default:
+            console.error('Usage: bloko images <orphans|cleanup|assign>');
+            console.error('  orphans              List images without an owner node');
+            console.error('  cleanup              Delete all orphan images');
+            console.error('  assign <img> <node>  Assign an image to a node');
+            process.exit(1);
+        }
         break;
       case 'help':
       case '--help':
@@ -78,6 +105,12 @@ Commands:
   reinit            Drop and recreate the database schema
   seed <preset>     Seed the database with preset data
   studio [port]     Start Bloko Studio (default port: 4173)
+  images <cmd>      Image management commands
+
+Image commands:
+  images orphans              List images without an owner node
+  images cleanup              Delete all orphan images from DB and S3
+  images assign <img> <node>  Assign an image to a node
 
 Available presets:
   dermatology       Medical dermatology glossary

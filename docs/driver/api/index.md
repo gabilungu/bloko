@@ -21,6 +21,7 @@ const tree = await bloko.nodes.getTree(collectionId);
 
 - [Collections](./collections) - Collection queries and navigation
 - [Nodes](./nodes) - Node queries with contents
+- [Images](./images) - Image upload, URLs, and variant generation
 
 ## When to Use
 
@@ -29,6 +30,7 @@ Use the **API** when you need:
 - Node content with block info
 - Breadcrumb trails
 - Localized data for a specific language
+- Image uploads with automatic variant generation
 
 Use the **CRUD API** when you need:
 - Low-level entity operations

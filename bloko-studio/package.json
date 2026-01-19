@@ -1,6 +1,6 @@
 {
 	"name": "bloko-studio",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"type": "module",
 	"description": "Web-based admin interface for Bloko",
 	"main": "server.js",
@@ -38,7 +38,7 @@
 	"author": "gabilungu",
 	"license": "MIT",
 	"dependencies": {
-		"bloko": ">=0.0.41"
+		"bloko": ">=0.0.45"
 	},
 	"devDependencies": {
 		"@storybook/addon-docs": "^9.1.3",

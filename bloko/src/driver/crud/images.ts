@@ -21,12 +21,27 @@ export function images(db: DB) {
       return result.rows[0] ?? null;
     },
 
+    async findByNode(nodeId: string): Promise<Image[]> {
+      const result = await db.query(
+        'SELECT * FROM images WHERE _node = $1 ORDER BY file_name',
+        [nodeId]
+      );
+      return result.rows;
+    },
+
+    async findOrphans(): Promise<Image[]> {
+      const result = await db.query(
+        'SELECT * FROM images WHERE _node IS NULL ORDER BY file_name'
+      );
+      return result.rows;
+    },
+
     async create(data: ImageInsert): Promise<Image> {
       const result = await db.query(
-        `INSERT INTO images (s3_key, file_name, mime_type, format, file_size, width, height, caption, credit)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        `INSERT INTO images (_node, s3_key, file_name, mime_type, format, file_size, width, height, caption, credit)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
         [
-          data.s3_key, data.file_name, data.mime_type,
+          data._node, data.s3_key, data.file_name, data.mime_type,
           data.format, data.file_size, data.width, data.height,
           data.caption, data.credit
         ]
@@ -39,6 +54,10 @@ export function images(db: DB) {
       const values: unknown[] = [];
       let idx = 1;
 
+      if (data._node !== undefined) {
+        fields.push(`_node = $${idx++}`);
+        values.push(data._node);
+      }
       if (data.s3_key !== undefined) {
         fields.push(`s3_key = $${idx++}`);
         values.push(data.s3_key);

@@ -61,7 +61,7 @@
 			new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
 		);
 
-		// Send as JSON to /api/images/upload-json endpoint
+		// Send as JSON to /api/images/upload-json endpoint with nodeId
 		const response = await fetch('/api/images/upload-json', {
 			method: 'POST',
 			headers: {
@@ -70,7 +70,8 @@
 			body: JSON.stringify({
 				base64Data,
 				fileName: file.name,
-				mimeType: file.type
+				mimeType: file.type,
+				nodeId: node.id
 			})
 		});
 

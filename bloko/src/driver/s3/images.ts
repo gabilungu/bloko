@@ -110,9 +110,12 @@ export function createImageService(s3: S3Client, config: S3Config, crud: Crud) {
 
   return {
     /**
-     * Upload an image (original only, variants generated on-demand)
+     * Upload an image owned by a specific node (original only, variants generated on-demand)
+     * @param file - Image buffer
+     * @param fileName - Original file name
+     * @param nodeId - Owner node ID (required)
      */
-    async upload(file: Buffer, fileName: string): Promise<UploadResult> {
+    async upload(file: Buffer, fileName: string, nodeId: string): Promise<UploadResult> {
       const sharp = await getSharp();
       const metadata = await sharp(file).metadata();
       if (!metadata.width || !metadata.height || !metadata.format) {
@@ -132,8 +135,9 @@ export function createImageService(s3: S3Client, config: S3Config, crud: Crud) {
         ContentType: mimeType,
       }));
 
-      // Create image record
+      // Create image record with node ownership
       const image = await crud.images.create({
+        _node: nodeId,
         s3_key: s3Key,
         file_name: fileName,
         mime_type: mimeType,

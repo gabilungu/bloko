@@ -1,11 +1,9 @@
 <script>
 	import { page } from '$app/stores';
-	import { goto, invalidate } from '$app/navigation';
-	import { notifications } from '$lib/ui/Notification/Notification.svelte';
+	import { goto } from '$app/navigation';
 
 	let { data } = $props();
 
-	let uploading = $state(false);
 	let selectedId = $derived($page.params.sid || null);
 
 	function selectImage(id) {
@@ -14,37 +12,6 @@
 			goto(`/images`);
 		} else {
 			goto(`/images/${id}`);
-		}
-	}
-
-	async function handleFileUpload(event) {
-		const file = event.target.files?.[0];
-		if (!file) return;
-
-		uploading = true;
-
-		try {
-			const formData = new FormData();
-			formData.append('file', file);
-
-			const response = await fetch(`/images/upload`, {
-				method: 'POST',
-				body: formData
-			});
-
-			const result = await response.json();
-
-			if (!response.ok) {
-				throw new Error(result.message || 'Failed to upload image');
-			}
-
-			await invalidate('app:images');
-			event.target.value = '';
-			notifications.success('Image uploaded successfully');
-		} catch (err) {
-			notifications.error(err.message || 'Failed to upload image');
-		} finally {
-			uploading = false;
 		}
 	}
 
@@ -61,27 +28,14 @@
 <div class="container">
 	<div class="header">
 		<h1>Images</h1>
+		<p class="hint">Upload images from within a node's edit form</p>
 	</div>
 
 	<div class="content">
-		<div class="uploadSection">
-			<label for="fileInput" class="uploadButton" class:uploading>
-				{uploading ? 'Uploading...' : 'Upload Image'}
-			</label>
-			<input
-				id="fileInput"
-				type="file"
-				accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-				onchange={handleFileUpload}
-				disabled={uploading}
-				style="display: none;"
-			/>
-		</div>
-
 		{#if data.images.length === 0}
 			<div class="emptyState">
 				<p>No images uploaded yet.</p>
-				<p class="hint">Click "Upload Image" to add your first image.</p>
+				<p class="hint">Upload images from within a node's edit form.</p>
 			</div>
 		{:else}
 			<div class="thumbnailGrid">
@@ -128,40 +82,17 @@
 		margin: 0;
 	}
 
+	.hint {
+		font-size: 14px;
+		color: var(--base500);
+		margin: 0;
+	}
+
 	.content {
 		flex: 1;
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
-	}
-
-	.uploadSection {
-		padding: 16px 32px;
-		border-bottom: 1px solid var(--base200);
-		display: flex;
-		gap: 12px;
-		align-items: center;
-		flex-shrink: 0;
-	}
-
-	.uploadButton {
-		padding: 10px 20px;
-		background-color: var(--action500);
-		color: var(--base0);
-		border-radius: 6px;
-		cursor: pointer;
-		font-size: 14px;
-		font-weight: 500;
-		transition: background-color 0.2s;
-	}
-
-	.uploadButton:hover:not(.uploading) {
-		background-color: var(--action600);
-	}
-
-	.uploadButton.uploading {
-		opacity: 0.6;
-		cursor: not-allowed;
 	}
 
 	.emptyState {
@@ -177,11 +108,6 @@
 	.emptyState p {
 		margin: 0;
 		font-size: 16px;
-	}
-
-	.emptyState .hint {
-		font-size: 14px;
-		color: var(--base500);
 	}
 
 	.thumbnailGrid {

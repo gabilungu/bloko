@@ -79,6 +79,7 @@ export interface Content {
 
 export interface Image {
   id: string;
+  _node: string | null;  // Owner node ID (null for legacy/orphan images)
   s3_key: string;
   file_name: string;
   mime_type: string;

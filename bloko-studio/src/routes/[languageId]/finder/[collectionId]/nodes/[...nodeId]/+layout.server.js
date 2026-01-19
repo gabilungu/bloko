@@ -100,8 +100,8 @@ export async function load({ params, depends }) {
 		})
 	);
 
-	// Get all images for the picker and cover image URL
-	const images = await bloko.crud.images.findAll();
+	// Get images owned by this node for the picker
+	const images = await bloko.crud.images.findByNode(lastNodeId);
 	let coverImageUrl = null;
 	if (node._cover_image) {
 		try {
