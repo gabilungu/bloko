@@ -1,10 +1,9 @@
 <script>
-	import { Input, Textarea, FormField, Button, Dropdown, LabeledText, LanguageTabs, BlockPreview } from '$lib/ui';
-	import ImagePicker from '$lib/ui/ImagePicker/ImagePicker.svelte';
+	import { Input, Textarea, FormField, Button, Dropdown, LabeledText, LanguageTabs, BlockPreview, ImageDropzone, MultiImageUpload } from '$lib/ui';
 	import { notifications } from '$lib/ui/Notification/Notification.svelte';
 	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { updateNode, deleteNode, uploadImage as uploadImageRemote } from '../data.remote.js';
+	import { updateNode, deleteNode, deleteImage as deleteImageRemote } from '../data.remote.js';
 	import ContentForm from './ContentForm.svelte';
 	import RelationForm from './RelationForm.svelte';
 	import { detailedMode } from '$lib/globals.svelte.js';
@@ -19,6 +18,7 @@
 	let coverImageUrl = $state(data.coverImageUrl || null);
 	let saving = $state(false);
 	let deleting = $state(false);
+	let uploadingImage = $state(false);
 
 	// Translation fields - initialize from node
 	let editTitle = $state({ ...(node?.title || {}) });
@@ -53,76 +53,143 @@
 		}
 	});
 
-	// Upload image handler - sends base64 JSON to avoid CSRF issues with FormData
-	async function uploadImage(file) {
-		// Read file as base64
-		const arrayBuffer = await file.arrayBuffer();
-		const base64Data = btoa(
-			new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-		);
-
-		// Send as JSON to /api/images/upload-json endpoint with nodeId
-		const response = await fetch('/api/images/upload-json', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				base64Data,
-				fileName: file.name,
-				mimeType: file.type,
-				nodeId: node.id
-			})
-		});
-
-		if (!response.ok) {
-			const errText = await response.text();
-			throw new Error(errText || 'Upload failed');
-		}
-
-		const result = await response.json();
-
-		// Invalidate to refresh the images list
-		await invalidate('app:nodes');
-
-		return {
-			id: result.image.id,
-			url: `/images/${result.image.id}`
-		};
-	}
-
-	// Handle cover image change
-	async function onCoverImageChange(imageId) {
+	// Handle cover image upload (file provided) or delete (file is null)
+	async function onCoverImageChange(file) {
 		if (!node) return;
 
-		editCoverImage = imageId;
+		if (file) {
+			// Upload new image via fetch (base64 is too large for query URL params)
+			uploadingImage = true;
+			try {
+				const arrayBuffer = await file.arrayBuffer();
+				const base64Data = btoa(
+					new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+				);
 
-		// Update the preview URL
-		if (imageId) {
-			const img = data.images?.find(i => i.id === imageId);
-			coverImageUrl = img?.url || null;
+				const response = await fetch('/api/images/upload-json', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						base64Data,
+						fileName: file.name,
+						mimeType: file.type,
+						nodeId: node.id
+					})
+				});
+
+				if (!response.ok) {
+					throw new Error(await response.text() || 'Upload failed');
+				}
+
+				const result = await response.json();
+
+				// Delete old cover image if exists
+				if (editCoverImage) {
+					try {
+						await deleteImageRemote({ imageId: editCoverImage });
+					} catch (e) {
+						// Ignore errors deleting old image
+					}
+				}
+
+				// Update node with new cover image
+				editCoverImage = result.image.id;
+				await updateNode({ id: node.id, _cover_image: result.image.id });
+				await invalidate('app:nodes');
+				notifications.success('Cover image uploaded');
+			} catch (error) {
+				console.error('Upload error:', error);
+				notifications.error('Failed to upload image');
+			} finally {
+				uploadingImage = false;
+			}
 		} else {
-			coverImageUrl = null;
-		}
+			// Delete existing image
+			if (!editCoverImage) return;
 
-		// Save immediately
-		saving = true;
-		try {
-			await updateNode({
-				id: node.id,
-				_cover_image: imageId
-			});
-			await invalidate('app:nodes');
-			notifications.success('Cover image updated');
-		} catch (error) {
-			console.error('Save error:', error);
-			notifications.error('Failed to update cover image');
-			// Restore original value
-			editCoverImage = node._cover_image || null;
-			coverImageUrl = data.coverImageUrl || null;
-		} finally {
-			saving = false;
+			saving = true;
+			try {
+				const imageIdToDelete = editCoverImage;
+
+				// Clear cover image reference first
+				editCoverImage = null;
+				coverImageUrl = null;
+				await updateNode({ id: node.id, _cover_image: null });
+
+				// Then delete the actual image
+				await deleteImageRemote({ imageId: imageIdToDelete });
+				await invalidate('app:nodes');
+				notifications.success('Cover image deleted');
+			} catch (error) {
+				console.error('Delete error:', error);
+				notifications.error('Failed to delete image');
+				// Restore on error
+				editCoverImage = node._cover_image || null;
+				coverImageUrl = data.coverImageUrl || null;
+			} finally {
+				saving = false;
+			}
 		}
+	}
+
+	// Handle gallery image upload
+	async function onGalleryUpload(file) {
+		if (!node) return;
+
+		try {
+			const arrayBuffer = await file.arrayBuffer();
+			const base64Data = btoa(
+				new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+			);
+
+			const response = await fetch('/api/images/upload-json', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					base64Data,
+					fileName: file.name,
+					mimeType: file.type,
+					nodeId: node.id
+				})
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				const errorMsg = errorData.message || errorData.body?.message || 'Upload failed';
+				throw new Error(errorMsg);
+			}
+
+			const result = await response.json();
+			const newImage = result.image;
+
+			// Add to node's _images array
+			const currentImages = node._images || [];
+			const newImagesArray = [...currentImages, newImage.id];
+			await updateNode({ id: node.id, _images: newImagesArray });
+
+			await invalidate('app:nodes');
+			notifications.success('Image added');
+		} catch (error) {
+			console.error('Gallery upload error:', error);
+			notifications.error(error.message || 'Failed to upload image');
+			throw error;
+		}
+	}
+
+	// Handle gallery image delete
+	async function onGalleryDelete(imageId) {
+		if (!node) return;
+
+		// Remove from node's _images array
+		const currentImages = node._images || [];
+		const newImagesArray = currentImages.filter(id => id !== imageId);
+		await updateNode({ id: node.id, _images: newImagesArray });
+
+		// Delete the actual image
+		await deleteImageRemote({ imageId });
+
+		await invalidate('app:nodes');
+		notifications.success('Image removed');
 	}
 
 	async function onBlur() {
@@ -256,9 +323,11 @@
 					data={data}
 					block={block}
 					node={node}
-					contentValue={block.content_type === 'number'
-						? (block.content?.value ?? '')
+					contentValue={block.content_type === 'number' || block.content_type === 'image' || block.content_type === 'image_list'
+						? (block.content?.value ?? (block.content_type === 'image_list' ? [] : ''))
 						: (block.content?.value?.[data.languageId] || '')}
+					contentImageUrl={block.content_type === 'image' ? data.contentImageUrls?.[block.id] : null}
+					contentImages={block.content_type === 'image_list' ? (data.contentImageUrls?.[block.id] || []) : []}
 				/>
 			{/if}
 		{/snippet}
@@ -350,19 +419,31 @@
 			</FormField>
 		</div>
 
-		<!-- Cover Image -->
-		<FormField label="Cover Image">
-			{#snippet children()}
-				<ImagePicker
-					value={editCoverImage}
-					imageUrl={coverImageUrl}
-					images={data.images || []}
-					onchange={onCoverImageChange}
-					onupload={uploadImage}
-					disabled={saving}
-				/>
-			{/snippet}
-		</FormField>
+		<!-- Images Row: Cover + Gallery -->
+		<div class="imagesRow">
+			<FormField label="Cover">
+				{#snippet children()}
+					<div class="coverImageWrapper">
+						<ImageDropzone
+							src={coverImageUrl}
+							onchange={onCoverImageChange}
+							disabled={saving || uploadingImage}
+						/>
+					</div>
+				{/snippet}
+			</FormField>
+
+			<FormField label="Gallery">
+				{#snippet children()}
+					<MultiImageUpload
+						images={data.galleryImages || []}
+						onupload={onGalleryUpload}
+						ondelete={onGalleryDelete}
+						disabled={saving}
+					/>
+				{/snippet}
+			</FormField>
+		</div>
 
 		<hr />
 
@@ -526,5 +607,14 @@
 		flex-direction: column;
 		gap: 4px;
 		width: 100%;
+	}
+	.imagesRow {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		gap: 16px;
+		align-items: start;
+	}
+	.coverImageWrapper {
+		width: 160px;
 	}
 </style>

@@ -108,6 +108,66 @@ export async function upsertContent({ _node, _block, value, forceCreate = false 
 		};
 	}
 
+	// Handle image type (single image UUID, not language-keyed)
+	if (contentType === 'image') {
+		const imageId = value === null || value === undefined || value === '' ? null : value;
+
+		if (imageId === null && !forceCreate) {
+			await bloko.db.query(
+				`DELETE FROM public.contents WHERE _node = $1 AND _block = $2`,
+				[_node, _block]
+			);
+			return { id: null, _block, value: null };
+		}
+
+		const valueJson = JSON.stringify(imageId);
+		const res = await bloko.db.query(
+			`INSERT INTO public.contents (_node, _block, value)
+			 VALUES ($1, $2, $3::jsonb)
+			 ON CONFLICT (_node, _block) DO UPDATE
+			 SET value = EXCLUDED.value
+			 RETURNING id, _block, value`,
+			[_node, _block, valueJson]
+		);
+
+		const row = res.rows[0];
+		return {
+			id: row.id,
+			_block: row._block,
+			value: row.value,
+		};
+	}
+
+	// Handle image_list type (array of image UUIDs, not language-keyed)
+	if (contentType === 'image_list') {
+		const imageIds = Array.isArray(value) ? value.filter(Boolean) : [];
+
+		if (imageIds.length === 0 && !forceCreate) {
+			await bloko.db.query(
+				`DELETE FROM public.contents WHERE _node = $1 AND _block = $2`,
+				[_node, _block]
+			);
+			return { id: null, _block, value: [] };
+		}
+
+		const valueJson = JSON.stringify(imageIds);
+		const res = await bloko.db.query(
+			`INSERT INTO public.contents (_node, _block, value)
+			 VALUES ($1, $2, $3::jsonb)
+			 ON CONFLICT (_node, _block) DO UPDATE
+			 SET value = EXCLUDED.value
+			 RETURNING id, _block, value`,
+			[_node, _block, valueJson]
+		);
+
+		const row = res.rows[0];
+		return {
+			id: row.id,
+			_block: row._block,
+			value: row.value || [],
+		};
+	}
+
 	// Handle language-keyed types (text, text_list, titled_list)
 	// Normalize empty values: treat empty strings/arrays as null
 	function normalize(val) {

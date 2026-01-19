@@ -6,6 +6,7 @@ export { default as ColumnView } from './ColumnView/index.js';
 export { default as Dropdown } from './Dropdown/Dropdown.svelte';
 export { default as FormField } from './FormField/FormField.svelte';
 export { default as ImageDropzone } from './ImageDropzone/ImageDropzone.svelte';
+export { default as MultiImageUpload } from './MultiImageUpload/MultiImageUpload.svelte';
 export { default as Input } from './Input/Input.svelte';
 export { default as LabeledText } from './LabeledText/LabeledText.svelte';
 export { default as LanguageTabs } from './LanguageTabs/index.js';

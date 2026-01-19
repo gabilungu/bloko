@@ -128,3 +128,15 @@ CREATE TRIGGER trigger_node_slug
 - **Node Type Delete**: CASCADE
 - **Parent Delete**: CASCADE
 - **Cover Image Delete**: SET NULL
+
+## Fields
+
+### _images
+
+JSONB array of image UUIDs for gallery display. Unlike `_cover_image` which references a single image, `_images` stores multiple image IDs:
+
+```json
+["550e8400-e29b-41d4-a716-446655440000", "6ba7b810-9dad-11d1-80b4-00c04fd430c8"]
+```
+
+Images in this array should exist in the `images` table. The array maintains insertion order for display purposes

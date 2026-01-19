@@ -100,8 +100,7 @@ export async function load({ params, depends }) {
 		})
 	);
 
-	// Get images owned by this node for the picker
-	const images = await bloko.crud.images.findByNode(lastNodeId);
+	// Get cover image URL
 	let coverImageUrl = null;
 	if (node._cover_image) {
 		try {
@@ -111,14 +110,70 @@ export async function load({ params, depends }) {
 		}
 	}
 
-	// Build image list with URLs for picker
-	const imageList = await Promise.all(
-		images.map(async (img) => ({
-			id: img.id,
-			file_name: img.file_name,
-			url: await bloko.images.getUrl(img.id, { width: 200, format: 'webp' })
-		}))
-	);
+	// Get gallery images (from node._images array) with URLs
+	let galleryImages = [];
+	if (node._images && node._images.length > 0) {
+		galleryImages = await Promise.all(
+			node._images.map(async (imageId) => {
+				try {
+					const img = await bloko.crud.images.findById(imageId);
+					if (!img) return null;
+					return {
+						id: img.id,
+						file_name: img.file_name,
+						url: await bloko.images.getUrl(img.id, { width: 200, format: 'webp' })
+					};
+				} catch (e) {
+					return null;
+				}
+			})
+		);
+		galleryImages = galleryImages.filter(Boolean);
+	}
+
+	// Resolve image URLs for content blocks with image/image_list types
+	// contentImageUrls: { blockId: { url, id, file_name } | Array<{ url, id, file_name }> }
+	const contentImageUrls = {};
+	for (const block of blocks) {
+		if (block.content_type === 'image') {
+			const content = contents.find((c) => c._block === block.id);
+			if (content?.value) {
+				try {
+					const img = await bloko.crud.images.findById(content.value);
+					if (img) {
+						contentImageUrls[block.id] = {
+							id: img.id,
+							file_name: img.file_name,
+							url: await bloko.images.getUrl(img.id, { width: 400, format: 'webp' })
+						};
+					}
+				} catch (e) {
+					// Image may have been deleted
+				}
+			}
+		} else if (block.content_type === 'image_list') {
+			const content = contents.find((c) => c._block === block.id);
+			const imageIds = Array.isArray(content?.value) ? content.value : [];
+			if (imageIds.length > 0) {
+				const images = await Promise.all(
+					imageIds.map(async (imageId) => {
+						try {
+							const img = await bloko.crud.images.findById(imageId);
+							if (!img) return null;
+							return {
+								id: img.id,
+								file_name: img.file_name,
+								url: await bloko.images.getUrl(img.id, { width: 200, format: 'webp' })
+							};
+						} catch (e) {
+							return null;
+						}
+					})
+				);
+				contentImageUrls[block.id] = images.filter(Boolean);
+			}
+		}
+	}
 
 	return {
 		node,
@@ -128,7 +183,8 @@ export async function load({ params, depends }) {
 		relationTypes,
 		outgoingRelations,
 		incomingRelations,
-		images: imageList,
-		coverImageUrl
+		coverImageUrl,
+		galleryImages,
+		contentImageUrls
 	};
 }

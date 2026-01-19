@@ -19,14 +19,18 @@ CREATE TYPE content_type AS ENUM (
 
 | Value | Description | Example |
 |-------|-------------|---------|
-| `number` | Float or integer | `42` or `3.14` |
+| `number` | Float or integer (not language-keyed) | `42` or `3.14` |
 | `text` | Multi-language string | `{"en": "Hello", "ro": "Salut"}` |
-| `text_list` | Array of multi-language strings | `[{"en": "Item 1"}, {"en": "Item 2"}]` |
-| `titled_text_list` | Array with title/text pairs | `[{"title": {...}, "text": {...}}]` |
-| `image` | Single image reference (UUID) | `"550e8400-e29b-41d4-a716-446655440000"` |
-| `image_list` | Array of image references | `[{"_image": "...", "sort": 1}]` |
+| `text_list` | Multi-language array of strings | `{"en": ["Item 1", "Item 2"], "ro": [...]}` |
+| `titled_text_list` | Multi-language array with title/text | `{"en": [{"title": "...", "text": "..."}], ...}` |
+| `image` | Single image UUID (not language-keyed) | `"550e8400-e29b-41d4-a716-446655440000"` |
+| `image_list` | Array of image UUIDs (not language-keyed) | `["uuid1", "uuid2", "uuid3"]` |
 
 **Note:** `null` content_type means the block is a container only (no content allowed).
+
+**Language-keyed vs plain values:**
+- `number`, `image`, `image_list` are stored as plain values (same across all languages)
+- `text`, `text_list`, `titled_text_list` are language-keyed (different value per language)
 
 ### sort_children_by
 
@@ -66,17 +70,16 @@ title JSONB
 
 ### Images Array (JSONB)
 
-Stores image references with sort order.
+Stores an ordered list of image UUIDs.
 
 ```sql
--- Column definition
+-- Column definition (on nodes table)
 _images JSONB
 ```
 
-**Structure:** `[{"_image": "uuid", "sort": number}, ...]`
+**Structure:** `["uuid1", "uuid2", "uuid3"]`
 
 **Rules:**
 - Can be `null` or empty `[]`
-- `_image` must be valid UUID referencing `images.id`
-- Images must belong to the same collection
-- `sort` determines display order
+- Each value must be a valid UUID referencing `images.id`
+- Array order determines display order

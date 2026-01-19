@@ -28,7 +28,7 @@ export async function POST({ request }) {
 
 		return json({
 			success: true,
-			image: result,
+			image: result.image,
 			message: 'Image uploaded and processed successfully'
 		});
 	} catch (err) {

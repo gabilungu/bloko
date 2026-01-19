@@ -57,6 +57,30 @@ CREATE TRIGGER trigger_content_validate
   EXECUTE FUNCTION validate_content_block();
 ```
 
+## Value Formats
+
+The `value` column stores JSONB data. Format depends on the block's `content_type`:
+
+### Language-keyed types
+
+These types store different values per language:
+
+| Type | Format | Example |
+|------|--------|---------|
+| `text` | `{"lang": "string"}` | `{"en": "Hello", "ro": "Salut"}` |
+| `text_list` | `{"lang": ["strings"]}` | `{"en": ["Item 1", "Item 2"]}` |
+| `titled_text_list` | `{"lang": [{title, text}]}` | `{"en": [{"title": "T", "text": "..."}]}` |
+
+### Non-language-keyed types
+
+These types store the same value across all languages:
+
+| Type | Format | Example |
+|------|--------|---------|
+| `number` | `number` | `42` or `3.14` |
+| `image` | `"uuid"` | `"550e8400-e29b-41d4-a716-446655440000"` |
+| `image_list` | `["uuids"]` | `["uuid1", "uuid2", "uuid3"]` |
+
 ## Cascade
 
 - **Node Delete**: CASCADE

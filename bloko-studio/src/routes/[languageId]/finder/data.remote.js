@@ -31,9 +31,9 @@ export const createNode = query('unchecked', ({ code, notes, _collection, _node_
 	return bloko.crud.nodes.create({ code, notes, _collection, _node_type, _parent });
 });
 
-export const updateNode = query('unchecked', ({ id, code, notes, _template, _node_type, title, subtitle, slug, _cover_image }) => {
+export const updateNode = query('unchecked', ({ id, code, notes, _template, _node_type, title, subtitle, slug, _cover_image, _images }) => {
 	const bloko = getBloko();
-	return bloko.crud.nodes.update(id, { code, notes, _template, _node_type, title, subtitle, slug, _cover_image });
+	return bloko.crud.nodes.update(id, { code, notes, _template, _node_type, title, subtitle, slug, _cover_image, _images });
 });
 
 export const deleteNode = query('unchecked', ({ id }) => {
@@ -129,7 +129,7 @@ export const getNodesForRelation = query('unchecked', async ({ collectionId, nod
 });
 
 // Image upload - takes base64 data to avoid CSRF issues with FormData
-export const uploadImage = query('unchecked', async ({ base64Data, fileName, mimeType }) => {
+export const uploadImage = query('unchecked', async ({ base64Data, fileName, mimeType, nodeId }) => {
 	// Validate file type
 	if (!mimeType.startsWith('image/') || mimeType === 'image/svg+xml') {
 		throw new Error('Only raster images are supported (JPG, PNG, WebP, GIF). SVG is not supported.');
@@ -140,7 +140,13 @@ export const uploadImage = query('unchecked', async ({ base64Data, fileName, mim
 
 	// Upload via bloko
 	const bloko = getBloko();
-	const result = await bloko.images.upload(buffer, fileName);
+	const result = await bloko.images.upload(buffer, fileName, nodeId);
 
 	return result;
+});
+
+// Image delete - deletes from S3 and database
+export const deleteImage = query('unchecked', async ({ imageId }) => {
+	const bloko = getBloko();
+	await bloko.images.delete(imageId);
 });

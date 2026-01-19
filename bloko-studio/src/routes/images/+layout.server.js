@@ -5,7 +5,8 @@ export async function load({ depends }) {
 
 	const bloko = getBloko();
 	const allImages = await bloko.crud.images.findAll();
-	const images = allImages.slice(0, 100);
+	const images = allImages.filter((img) => img._node).slice(0, 100);
+	const orphanImages = await bloko.crud.images.findOrphans();
 
 	// Construct S3 base URL for image previews (use same defaults as bloko.js)
 	const endpoint = process.env.BLOKO_S3_ENDPOINT || 'http://localhost:9000';
@@ -16,6 +17,7 @@ export async function load({ depends }) {
 
 	return {
 		images,
+		orphanImages,
 		s3BaseUrl
 	};
 }

@@ -110,11 +110,11 @@ export function nodes(db: DB) {
 
       const result = await db.query(
         `INSERT INTO nodes (_collection, _template, _node_type, _parent, code, title, subtitle, slug, sort, sort_children_by, _cover_image, _images, notes)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13) RETURNING *`,
         [
           data._collection, data._template, data._node_type, data._parent,
           data.code, data.title, data.subtitle, data.slug, sort, data.sort_children_by,
-          data._cover_image, data._images, data.notes
+          data._cover_image, data._images ? JSON.stringify(data._images) : null, data.notes
         ]
       );
       return result.rows[0];
@@ -170,8 +170,8 @@ export function nodes(db: DB) {
         values.push(data._cover_image);
       }
       if (data._images !== undefined) {
-        fields.push(`_images = $${idx++}`);
-        values.push(data._images);
+        fields.push(`_images = $${idx++}::jsonb`);
+        values.push(data._images ? JSON.stringify(data._images) : null);
       }
       if (data.notes !== undefined) {
         fields.push(`notes = $${idx++}`);

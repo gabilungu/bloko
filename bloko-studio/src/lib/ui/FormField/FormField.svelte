@@ -22,7 +22,9 @@
 	{/if}
 
 	<div class="input-wrapper">
-		{@render children()}
+		{#if children}
+			{@render children()}
+		{/if}
 	</div>
 
 	{#if helperText}

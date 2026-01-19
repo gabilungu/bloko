@@ -1,11 +1,10 @@
 <script>
-	import { Input, Textarea, Button } from '$lib/ui';
+	import { Input, Textarea, Button, ImageDropzone, MultiImageUpload } from '$lib/ui';
 	import { notifications } from '$lib/ui/Notification/Notification.svelte';
 	import { invalidate } from '$app/navigation';
-	import { page } from '$app/stores';
-	import { updateContent } from '../data.remote.js';
+	import { updateContent, deleteImage as deleteImageRemote } from '../data.remote.js';
 
-	let { data, block, node, contentValue } = $props();
+	let { data, block, node, contentValue, contentImageUrl = null, contentImages = [] } = $props();
 
 	let editValue = $state(contentValue || '');
 	let saving = $state(false);
@@ -214,10 +213,133 @@
 	function updateTitledListItem(index, field, value) {
 		titledListItems[index] = { ...titledListItems[index], [field]: value };
 	}
+
+	// Image upload helper
+	async function uploadImage(file) {
+		const arrayBuffer = await file.arrayBuffer();
+		const base64Data = btoa(
+			new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+		);
+
+		const response = await fetch('/api/images/upload-json', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				base64Data,
+				fileName: file.name,
+				mimeType: file.type,
+				nodeId: node.id
+			})
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json().catch(() => ({}));
+			throw new Error(errorData.message || errorData.body?.message || 'Upload failed');
+		}
+
+		return response.json();
+	}
+
+	// Handle single image change (for 'image' content type)
+	async function onImageChange(file) {
+		if (!file) {
+			// Clear the image
+			saving = true;
+			try {
+				// Delete old image if exists
+				if (contentValue) {
+					await deleteImageRemote({ imageId: contentValue });
+				}
+				await updateContent({ _node: node.id, _block: block.id, value: null });
+				await invalidate('app:nodes');
+				notifications.success('Image removed');
+			} catch (error) {
+				console.error('Image delete error:', error);
+				notifications.error('Failed to remove image');
+			} finally {
+				saving = false;
+			}
+			return;
+		}
+
+		saving = true;
+		try {
+			// Delete old image if exists
+			if (contentValue) {
+				await deleteImageRemote({ imageId: contentValue });
+			}
+			// Upload new image
+			const result = await uploadImage(file);
+			await updateContent({ _node: node.id, _block: block.id, value: result.image.id });
+			await invalidate('app:nodes');
+			notifications.success('Image updated');
+		} catch (error) {
+			console.error('Image upload error:', error);
+			notifications.error(error.message || 'Failed to upload image');
+		} finally {
+			saving = false;
+		}
+	}
+
+	// Handle image list upload (for 'image_list' content type)
+	async function onImageListUpload(file) {
+		saving = true;
+		try {
+			const result = await uploadImage(file);
+			const currentIds = Array.isArray(contentValue) ? contentValue : [];
+			const newIds = [...currentIds, result.image.id];
+			await updateContent({ _node: node.id, _block: block.id, value: newIds });
+			await invalidate('app:nodes');
+			notifications.success('Image added');
+		} catch (error) {
+			console.error('Image upload error:', error);
+			notifications.error(error.message || 'Failed to upload image');
+			throw error;
+		} finally {
+			saving = false;
+		}
+	}
+
+	// Handle image list delete (for 'image_list' content type)
+	async function onImageListDelete(imageId) {
+		saving = true;
+		try {
+			const currentIds = Array.isArray(contentValue) ? contentValue : [];
+			const newIds = currentIds.filter(id => id !== imageId);
+			await updateContent({ _node: node.id, _block: block.id, value: newIds });
+			await deleteImageRemote({ imageId });
+			await invalidate('app:nodes');
+			notifications.success('Image removed');
+		} catch (error) {
+			console.error('Image delete error:', error);
+			notifications.error('Failed to remove image');
+		} finally {
+			saving = false;
+		}
+	}
 </script>
 
 <div class="contentFormWrapper">
-	{#if contentExists}
+	{#if block.content_type === 'image'}
+		<!-- Image type: always show dropzone (no Create Content needed) -->
+		<div class="imageWrapper">
+			<ImageDropzone
+				src={contentImageUrl?.url || null}
+				onchange={onImageChange}
+				disabled={saving}
+			/>
+		</div>
+	{:else if block.content_type === 'image_list'}
+		<!-- Image list type: always show multi-upload (no Create Content needed) -->
+		<div class="imageListWrapper">
+			<MultiImageUpload
+				images={contentImages}
+				onupload={onImageListUpload}
+				ondelete={onImageListDelete}
+				disabled={saving}
+			/>
+		</div>
+	{:else if contentExists}
 		<div class="inputWrapper">
 			{#if block.content_type === 'text'}
 				<Input
@@ -396,5 +518,11 @@
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
+	}
+	.imageWrapper {
+		width: 200px;
+	}
+	.imageListWrapper {
+		flex: 1;
 	}
 </style>
