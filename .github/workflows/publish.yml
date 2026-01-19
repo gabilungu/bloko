@@ -5,9 +5,10 @@ on:
     branches: [main]
     paths:
       - 'bloko/package.json'
+      - 'bloko-studio/package.json'
 
 jobs:
-  publish:
+  publish-bloko:
     runs-on: ubuntu-latest
     environment: npm
     permissions:
@@ -21,7 +22,7 @@ jobs:
       - name: Check if version changed
         id: version
         run: |
-          OLD=$(git show HEAD~1:bloko/package.json | grep '"version"' | cut -d'"' -f4)
+          OLD=$(git show HEAD~1:bloko/package.json | grep '"version"' | cut -d'"' -f4 || echo "0.0.0")
           NEW=$(grep '"version"' bloko/package.json | cut -d'"' -f4)
           if [ "$OLD" != "$NEW" ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
@@ -51,3 +52,48 @@ jobs:
         if: steps.version.outputs.changed == 'true'
         run: npm publish --provenance --access public
         working-directory: bloko
+
+  publish-bloko-studio:
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check if version changed
+        id: version
+        run: |
+          OLD=$(git show HEAD~1:bloko-studio/package.json | grep '"version"' | cut -d'"' -f4 || echo "0.0.0")
+          NEW=$(grep '"version"' bloko-studio/package.json | cut -d'"' -f4)
+          if [ "$OLD" != "$NEW" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Version changed: $OLD -> $NEW"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Version unchanged: $NEW"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.version.outputs.changed == 'true'
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        if: steps.version.outputs.changed == 'true'
+        run: npm ci
+        working-directory: bloko-studio
+
+      - name: Build
+        if: steps.version.outputs.changed == 'true'
+        run: npm run build
+        working-directory: bloko-studio
+
+      - name: Publish
+        if: steps.version.outputs.changed == 'true'
+        run: npm publish --provenance --access public
+        working-directory: bloko-studio

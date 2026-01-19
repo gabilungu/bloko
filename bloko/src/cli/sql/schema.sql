@@ -94,12 +94,19 @@ CREATE TABLE images (
 CREATE TABLE image_variants (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   _image UUID NOT NULL REFERENCES images(id) ON DELETE CASCADE,
-  width INTEGER NOT NULL,
-  height INTEGER NOT NULL,
+
+  -- Request params (nullable means "auto" / use original)
+  req_width INTEGER,
+  req_height INTEGER,
+  format VARCHAR(10) NOT NULL DEFAULT 'webp',
+  quality INTEGER NOT NULL DEFAULT 80,
+
+  -- Actual output dimensions after resize/crop
+  actual_width INTEGER NOT NULL,
+  actual_height INTEGER NOT NULL,
+
   s3_key VARCHAR(500) NOT NULL UNIQUE,
-  format VARCHAR(10) NOT NULL,
-  file_size INTEGER NOT NULL,
-  UNIQUE (_image, width, height, format)
+  file_size INTEGER NOT NULL
 );
 
 CREATE TABLE nodes (
@@ -159,6 +166,15 @@ CREATE INDEX idx_blocks_title_gin ON blocks USING GIN (title);
 CREATE INDEX idx_images_caption_gin ON images USING GIN (caption);
 
 CREATE INDEX idx_image_variants_image ON image_variants(_image);
+
+-- Unique constraint for variant lookup (COALESCE handles nullable req_width/req_height)
+CREATE UNIQUE INDEX idx_image_variants_params ON image_variants (
+  _image,
+  COALESCE(req_width, 0),
+  COALESCE(req_height, 0),
+  format,
+  quality
+);
 
 CREATE INDEX idx_nodes_collection ON nodes(_collection);
 CREATE INDEX idx_nodes_template ON nodes(_template);

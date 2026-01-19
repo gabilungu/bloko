@@ -93,10 +93,18 @@ export interface Image {
 export interface ImageVariant {
   id: string;
   _image: string;
-  width: number;
-  height: number;
-  s3_key: string;
+
+  // Request params (null means "auto" / use original)
+  req_width: number | null;
+  req_height: number | null;
   format: string;
+  quality: number;
+
+  // Actual output dimensions after resize/crop
+  actual_width: number;
+  actual_height: number;
+
+  s3_key: string;
   file_size: number;
 }
 

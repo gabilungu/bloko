@@ -4,7 +4,7 @@ import type { ImageVariant, ImageVariantInsert, ImageVariantUpdate } from '../ty
 export function imageVariants(db: DB) {
   return {
     async findAll(): Promise<ImageVariant[]> {
-      const result = await db.query('SELECT * FROM image_variants ORDER BY width, height');
+      const result = await db.query('SELECT * FROM image_variants ORDER BY actual_width, actual_height');
       return result.rows;
     },
 
@@ -15,7 +15,7 @@ export function imageVariants(db: DB) {
 
     async findByImage(imageId: string): Promise<ImageVariant[]> {
       const result = await db.query(
-        'SELECT * FROM image_variants WHERE _image = $1 ORDER BY width, height',
+        'SELECT * FROM image_variants WHERE _image = $1 ORDER BY actual_width, actual_height',
         [imageId]
       );
       return result.rows;
@@ -29,19 +29,47 @@ export function imageVariants(db: DB) {
       return result.rows[0] ?? null;
     },
 
-    async findByDimensions(imageId: string, width: number, height: number, format: string): Promise<ImageVariant | null> {
+    /**
+     * Find variant by request parameters.
+     * Uses COALESCE to match null values (which represent "auto" dimensions).
+     */
+    async findByParams(
+      imageId: string,
+      reqWidth: number | null,
+      reqHeight: number | null,
+      format: string,
+      quality: number
+    ): Promise<ImageVariant | null> {
       const result = await db.query(
-        'SELECT * FROM image_variants WHERE _image = $1 AND width = $2 AND height = $3 AND format = $4',
-        [imageId, width, height, format]
+        `SELECT * FROM image_variants
+         WHERE _image = $1
+           AND COALESCE(req_width, 0) = COALESCE($2, 0)
+           AND COALESCE(req_height, 0) = COALESCE($3, 0)
+           AND format = $4
+           AND quality = $5`,
+        [imageId, reqWidth, reqHeight, format, quality]
       );
       return result.rows[0] ?? null;
     },
 
     async create(data: ImageVariantInsert): Promise<ImageVariant> {
       const result = await db.query(
-        `INSERT INTO image_variants (_image, width, height, s3_key, format, file_size)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [data._image, data.width, data.height, data.s3_key, data.format, data.file_size]
+        `INSERT INTO image_variants (
+          _image, req_width, req_height, format, quality,
+          actual_width, actual_height, s3_key, file_size
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [
+          data._image,
+          data.req_width,
+          data.req_height,
+          data.format,
+          data.quality,
+          data.actual_width,
+          data.actual_height,
+          data.s3_key,
+          data.file_size,
+        ]
       );
       return result.rows[0];
     },
@@ -55,21 +83,33 @@ export function imageVariants(db: DB) {
         fields.push(`_image = $${idx++}`);
         values.push(data._image);
       }
-      if (data.width !== undefined) {
-        fields.push(`width = $${idx++}`);
-        values.push(data.width);
+      if (data.req_width !== undefined) {
+        fields.push(`req_width = $${idx++}`);
+        values.push(data.req_width);
       }
-      if (data.height !== undefined) {
-        fields.push(`height = $${idx++}`);
-        values.push(data.height);
-      }
-      if (data.s3_key !== undefined) {
-        fields.push(`s3_key = $${idx++}`);
-        values.push(data.s3_key);
+      if (data.req_height !== undefined) {
+        fields.push(`req_height = $${idx++}`);
+        values.push(data.req_height);
       }
       if (data.format !== undefined) {
         fields.push(`format = $${idx++}`);
         values.push(data.format);
+      }
+      if (data.quality !== undefined) {
+        fields.push(`quality = $${idx++}`);
+        values.push(data.quality);
+      }
+      if (data.actual_width !== undefined) {
+        fields.push(`actual_width = $${idx++}`);
+        values.push(data.actual_width);
+      }
+      if (data.actual_height !== undefined) {
+        fields.push(`actual_height = $${idx++}`);
+        values.push(data.actual_height);
+      }
+      if (data.s3_key !== undefined) {
+        fields.push(`s3_key = $${idx++}`);
+        values.push(data.s3_key);
       }
       if (data.file_size !== undefined) {
         fields.push(`file_size = $${idx++}`);

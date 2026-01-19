@@ -1,6 +1,6 @@
 {
 	"name": "bloko",
-	"version": "0.0.42",
+	"version": "0.0.44",
 	"type": "module",
 	"description": "Multi-language CMS driver for PostgreSQL",
 	"main": "dist/driver/index.js",

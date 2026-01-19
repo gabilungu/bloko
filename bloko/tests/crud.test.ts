@@ -531,15 +531,20 @@ describe('images and variants', () => {
 
     const variant = await crud.imageVariants.create({
       _image: image.id,
-      width: 150,
-      height: 150,
-      s3_key: 'images/col/test-150x150.webp',
+      req_width: 150,
+      req_height: 150,
       format: 'webp',
+      quality: 80,
+      actual_width: 150,
+      actual_height: 150,
+      s3_key: 'images/col/test-150x150.webp',
       file_size: 512,
     });
 
     expect(variant.id).toBeDefined();
     expect(variant._image).toBe(image.id);
+    expect(variant.req_width).toBe(150);
+    expect(variant.quality).toBe(80);
   });
 
   it('should find variants by image', async () => {
@@ -560,19 +565,25 @@ describe('images and variants', () => {
 
     await crud.imageVariants.create({
       _image: image.id,
-      width: 150,
-      height: 150,
-      s3_key: 'images/col/test-150x150.webp',
+      req_width: 150,
+      req_height: 150,
       format: 'webp',
+      quality: 80,
+      actual_width: 150,
+      actual_height: 150,
+      s3_key: 'images/col/test-150x150.webp',
       file_size: 512,
     });
 
     await crud.imageVariants.create({
       _image: image.id,
-      width: 640,
-      height: 480,
-      s3_key: 'images/col/test-640x480.webp',
+      req_width: 640,
+      req_height: null,
       format: 'webp',
+      quality: 80,
+      actual_width: 640,
+      actual_height: 480,
+      s3_key: 'images/col/test-640x480.webp',
       file_size: 2048,
     });
 

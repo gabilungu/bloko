@@ -6,8 +6,7 @@ export async function studio(port: number = 4173) {
   // Use npx to run bloko-studio (downloads on-demand if not installed)
   const child = spawn('npx', ['bloko-studio', port.toString()], {
     stdio: 'inherit',
-    env: process.env,
-    shell: true
+    env: process.env
   });
 
   child.on('error', (error) => {
