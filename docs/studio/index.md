@@ -10,7 +10,7 @@ From your project folder (where your `.env` file is located):
 npx bloko studio
 ```
 
-Studio will start at [http://localhost:4173](http://localhost:4173).
+Studio will start at `http://localhost:4173`.
 
 ## Features
 
