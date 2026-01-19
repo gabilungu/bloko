@@ -12,6 +12,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bloko": "^0.0.39"
+    "bloko": "^0.0.46"
   }
 }

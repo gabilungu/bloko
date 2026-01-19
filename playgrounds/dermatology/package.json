@@ -17,6 +17,6 @@
 		"vite": "^7.2.6"
 	},
 	"dependencies": {
-		"bloko": "^0.0.45"
+		"bloko": "^0.0.46"
 	}
 }
