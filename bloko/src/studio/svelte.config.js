@@ -9,7 +9,7 @@ const config = {
 			bodyLimit: 52428800  // 50 MB in bytes
 		}),
 		csrf: {
-			trustedOrigins: []  // Disable CSRF protection for API endpoints
+			checkOrigin: false  // Disable CSRF protection for Studio (local tool)
 		},
 		experimental: {
 			remoteFunctions: true

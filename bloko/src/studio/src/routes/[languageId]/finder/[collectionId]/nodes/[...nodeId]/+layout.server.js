@@ -100,6 +100,26 @@ export async function load({ params, depends }) {
 		})
 	);
 
+	// Get all images for the picker and cover image URL
+	const images = await bloko.crud.images.findAll();
+	let coverImageUrl = null;
+	if (node._cover_image) {
+		try {
+			coverImageUrl = await bloko.images.getUrl(node._cover_image, { width: 400, format: 'webp' });
+		} catch (e) {
+			// Image may have been deleted
+		}
+	}
+
+	// Build image list with URLs for picker
+	const imageList = await Promise.all(
+		images.map(async (img) => ({
+			id: img.id,
+			file_name: img.file_name,
+			url: await bloko.images.getUrl(img.id, { width: 200, format: 'webp' })
+		}))
+	);
+
 	return {
 		node,
 		nodeTypes,
@@ -107,6 +127,8 @@ export async function load({ params, depends }) {
 		contents,
 		relationTypes,
 		outgoingRelations,
-		incomingRelations
+		incomingRelations,
+		images: imageList,
+		coverImageUrl
 	};
 }

@@ -1,7 +1,7 @@
 /** @type {import('@sveltejs/kit').Handle} */
 export async function handle({ event, resolve }) {
-	// Disable CSRF protection for API routes
-	if (event.url.pathname.startsWith('/api/')) {
+	// Disable CSRF protection for API routes and image uploads
+	if (event.url.pathname.startsWith('/api/') || event.url.pathname.startsWith('/images/')) {
 		return await resolve(event, {
 			filterSerializedResponseHeaders: (name) => name === 'content-type'
 		});

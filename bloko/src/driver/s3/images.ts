@@ -104,7 +104,7 @@ export function createImageService(s3: S3Client, config: S3Config, crud: Crud) {
         quality: options.quality ?? 80,
       };
 
-      // Check if variant already exists in DB
+      // Check if variant already exists in DB by s3_key (uses requested dimensions)
       const variantKey = getVariantKey(imageId, fullOptions);
       const existingVariant = await crud.imageVariants.findByS3Key(variantKey);
 
@@ -112,9 +112,20 @@ export function createImageService(s3: S3Client, config: S3Config, crud: Crud) {
         return getS3Url(existingVariant.s3_key);
       }
 
-      // Generate variant on-demand
-      const variant = await this.generateVariant(image, fullOptions);
-      return getS3Url(variant.s3_key);
+      // Generate variant on-demand (with race condition handling)
+      try {
+        const variant = await this.generateVariant(image, fullOptions);
+        return getS3Url(variant.s3_key);
+      } catch (err: unknown) {
+        // Handle duplicate key error (race condition - another request created it)
+        if (err && typeof err === 'object' && 'code' in err && err.code === '23505') {
+          const variant = await crud.imageVariants.findByS3Key(variantKey);
+          if (variant) {
+            return getS3Url(variant.s3_key);
+          }
+        }
+        throw err;
+      }
     },
 
     /**
@@ -148,8 +159,6 @@ export function createImageService(s3: S3Client, config: S3Config, crud: Crud) {
       }
 
       const variantBuffer = await transformer.toBuffer();
-      const variantMetadata = await sharp(variantBuffer).metadata();
-
       const variantKey = getVariantKey(image.id, options);
 
       // Upload variant to S3
@@ -161,10 +170,11 @@ export function createImageService(s3: S3Client, config: S3Config, crud: Crud) {
       }));
 
       // Save variant record to DB
+      // Store REQUESTED dimensions (not actual output) to match s3_key and lookup
       return crud.imageVariants.create({
         _image: image.id,
-        width: variantMetadata.width ?? width,
-        height: variantMetadata.height ?? height,
+        width,
+        height,
         s3_key: variantKey,
         format,
         file_size: variantBuffer.length,

@@ -1,9 +1,10 @@
 <script>
 	import { Input, Textarea, FormField, Button, Dropdown, LabeledText, LanguageTabs, BlockPreview } from '$lib/ui';
+	import ImagePicker from '$lib/ui/ImagePicker/ImagePicker.svelte';
 	import { notifications } from '$lib/ui/Notification/Notification.svelte';
 	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { updateNode, deleteNode } from '../data.remote.js';
+	import { updateNode, deleteNode, uploadImage as uploadImageRemote } from '../data.remote.js';
 	import ContentForm from './ContentForm.svelte';
 	import RelationForm from './RelationForm.svelte';
 	import { detailedMode } from '$lib/globals.svelte.js';
@@ -14,6 +15,8 @@
 	let editNotes = $state(node?.notes || '');
 	let editNodeType = $state(node?._node_type || '');
 	let editTemplate = $state(node?._template || '');
+	let editCoverImage = $state(node?._cover_image || null);
+	let coverImageUrl = $state(data.coverImageUrl || null);
 	let saving = $state(false);
 	let deleting = $state(false);
 
@@ -42,11 +45,84 @@
 			editNotes = node?.notes || '';
 			editNodeType = node?._node_type || '';
 			editTemplate = node?._template || '';
+			editCoverImage = node?._cover_image || null;
+			coverImageUrl = data.coverImageUrl || null;
 			editTitle = { ...(node?.title || {}) };
 			editSubtitle = { ...(node?.subtitle || {}) };
 			editSlug = { ...(node?.slug || {}) };
 		}
 	});
+
+	// Upload image handler - sends base64 JSON to avoid CSRF issues with FormData
+	async function uploadImage(file) {
+		// Read file as base64
+		const arrayBuffer = await file.arrayBuffer();
+		const base64Data = btoa(
+			new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+		);
+
+		// Send as JSON to /api/images/upload-json endpoint
+		const response = await fetch('/api/images/upload-json', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				base64Data,
+				fileName: file.name,
+				mimeType: file.type
+			})
+		});
+
+		if (!response.ok) {
+			const errText = await response.text();
+			throw new Error(errText || 'Upload failed');
+		}
+
+		const result = await response.json();
+
+		// Invalidate to refresh the images list
+		await invalidate('app:nodes');
+
+		return {
+			id: result.image.id,
+			url: `/images/${result.image.id}`
+		};
+	}
+
+	// Handle cover image change
+	async function onCoverImageChange(imageId) {
+		if (!node) return;
+
+		editCoverImage = imageId;
+
+		// Update the preview URL
+		if (imageId) {
+			const img = data.images?.find(i => i.id === imageId);
+			coverImageUrl = img?.url || null;
+		} else {
+			coverImageUrl = null;
+		}
+
+		// Save immediately
+		saving = true;
+		try {
+			await updateNode({
+				id: node.id,
+				_cover_image: imageId
+			});
+			await invalidate('app:nodes');
+			notifications.success('Cover image updated');
+		} catch (error) {
+			console.error('Save error:', error);
+			notifications.error('Failed to update cover image');
+			// Restore original value
+			editCoverImage = node._cover_image || null;
+			coverImageUrl = data.coverImageUrl || null;
+		} finally {
+			saving = false;
+		}
+	}
 
 	async function onBlur() {
 		if (!node) return;
@@ -273,6 +349,20 @@
 			</FormField>
 		</div>
 
+		<!-- Cover Image -->
+		<FormField label="Cover Image">
+			{#snippet children()}
+				<ImagePicker
+					value={editCoverImage}
+					imageUrl={coverImageUrl}
+					images={data.images || []}
+					onchange={onCoverImageChange}
+					onupload={uploadImage}
+					disabled={saving}
+				/>
+			{/snippet}
+		</FormField>
+
 		<hr />
 
 		<!-- Language Tabs -->
@@ -394,11 +484,6 @@
 		font-weight: 600;
 		margin: 0;
 		color: var(--base900);
-	}
-	.sid {
-		font-size: 14px;
-		color: var(--base400);
-		margin-left: auto;
 	}
 	.editor {
 		display: grid;
