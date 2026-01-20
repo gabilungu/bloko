@@ -88,8 +88,7 @@ export function createNodesApi(crud: Crud) {
      */
     async findByPath(
       lang: string,
-      slugPath: string[],
-      _collectionId?: string
+      slugPath: string[]
     ): Promise<FindByPathResult | null> {
       const breadcrumb: FindByPathResult['breadcrumb'] = [];
       let parentId: string | null = null;
